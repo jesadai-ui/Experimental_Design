@@ -1,0 +1,2018 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรแกรมวิเคราะห์สถิติเพื่องานด้านการเพาะเลี้ยงสัตว์น้ำ</title>
+    <!-- โหลดฟอนต์ -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- โหลดไลบรารีคณิตศาสตร์และสถิติ -->
+    <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-dark: #004d40; 
+            --primary-gradient: linear-gradient(135deg, #00695c, #26a69a, #4db6ac);
+            --panel-bg: #f2fbf9;
+            --cell-bg: #ffffff;
+            --cell-focus: #fff3e0; 
+            --cell-focus-border: #ff9800;
+            --text-main: #333;
+        }
+        
+        * { box-sizing: border-box; max-width: 100%; }
+        body { font-family: 'Sarabun', sans-serif; background: var(--primary-gradient); color: var(--text-main); margin: 0; padding: 20px 10px; display: flex; justify-content: center; min-height: 100vh; }
+        .container { background: var(--panel-bg); width: 100%; max-width: 1200px; border-radius: 20px; padding: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.3); border: 3px solid #b2dfdb; overflow: hidden; }
+        .header { text-align: center; margin-bottom: 25px; background: linear-gradient(90deg, #e0f2f1, #b2dfdb, #e0f2f1); padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #80cbc4; }
+        .header h1 { color: var(--primary-dark); font-size: 2.2rem; margin: 0 0 15px 0; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); }
+        .designer-name { color: #d32f2f; font-size: 1.6rem; margin: 0; font-weight: 700; background: #fff9c4; padding: 10px 30px; border-radius: 30px; display: inline-block; border: 2px solid #fbc02d; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        
+        .app-version-wrapper { width: 100%; display: block; margin-top: 15px; }
+        .app-version { font-size: 1.2rem; color: #ffffff; font-weight: 700; background: linear-gradient(90deg, #ff8f00, #ef6c00); display: inline-block; padding: 8px 25px; border-radius: 30px; border: 2px solid #ffe0b2; box-shadow: 0 4px 10px rgba(239, 108, 0, 0.3); }
+        
+        .control-panel { background: #f1f8e9; padding: 20px; border-radius: 15px; border: 2px solid #c5e1a5; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); width: 100%; }
+        .control-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; margin-bottom: 15px; width: 100%; }
+        .control-row:last-child { margin-bottom: 0; border-top: 1px dashed #9ccc65; padding-top: 15px;}
+        .test-selector-wrapper { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: bold; color: #004d40; width: 100%; justify-content: center; margin-bottom: 15px; background: #e8f5e9; padding: 15px; border-radius: 10px; border: 1px solid #a5d6a7; }
+        select { font-family: 'Sarabun', sans-serif; font-size: 1.1rem; padding: 8px 12px; border-radius: 8px; border: 2px solid #4caf50; color: #1b5e20; font-weight: 600; cursor: pointer; background: white; transition: 0.3s; width: 100%; max-width: 500px; }
+        select:focus { outline: none; border-color: #ff9800; box-shadow: 0 0 8px rgba(255,152,0,0.3); }
+        input[type="text"].filename-input, input[type="number"].test-value-input { padding: 8px 15px; font-family: 'Sarabun', sans-serif; font-size: 1rem; border: 1px solid #aed581; border-radius: 8px; background: #ffffff; width: 100%; }
+        input[type="text"].filename-input { max-width: 250px; }
+        input[type="number"].test-value-input { max-width: 100px; text-align: center;}
+        
+        .var-setup-box { background:#fff3e0; padding:15px; border-radius:10px; border:1px solid #ffcc80; margin-bottom:15px; width: 100%; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; }
+
+        button { font-family: 'Sarabun', sans-serif; font-size: 1rem; padding: 8px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; transition: 0.2s; box-shadow: 0 3px 6px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; gap: 5px; }
+        button:active { transform: translateY(2px); box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+        .btn-add { background-color: #43a047; } .btn-add:hover { background-color: #2e7d32; }
+        .btn-remove { background-color: #f4511e; } .btn-remove:hover { background-color: #d84315; }
+        .btn-clear { background-color: #546e7a; } .btn-clear:hover { background-color: #455a64; }
+        .btn-exit { background-color: #e53935; } .btn-exit:hover { background-color: #c62828; }
+        .btn-analyze { background-color: #1e88e5; font-size: 1.25rem; width: 100%; margin-top: 15px; padding: 15px; border-radius: 12px; }
+        .btn-analyze:hover { background-color: #1565c0; }
+        .btn-save { background-color: #fb8c00; } .btn-save:hover { background-color: #ef6c00; }
+        .btn-load { background-color: #8e24aa; } .btn-load:hover { background-color: #6a1b9a; }
+        .btn-history { background-color: #00897b; } .btn-history:hover { background-color: #00695c; }
+        .btn-trt { background-color: #00acc1; } .btn-trt:hover { background-color: #00838f; }
+        .btn-template { background-color: #8d6e63; } .btn-template:hover { background-color: #6d4c41; }
+        
+        .btn-print { background: linear-gradient(135deg, #ff4081, #f50057); color: white; font-size: 1.25rem; font-weight: bold; width: 100%; margin-bottom: 20px; padding: 15px; border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(245, 0, 87, 0.4); transition: 0.3s; }
+        .btn-print:hover { background: linear-gradient(135deg, #f50057, #c51162); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(245, 0, 87, 0.6); }
+
+        .data-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; width: 100%; }
+        .group-container { background: #e1f5fe; padding: 20px; border-radius: 15px; border: 2px solid #81d4fa; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.05); width: 100%; }
+        input.group-name-input { width: 100%; text-align: center; font-family: 'Sarabun', sans-serif; font-size: 1.15rem; font-weight: 700; color: #01579b; background: #ffffff; border: 2px dashed #4fc3f7; border-radius: 10px; padding: 10px; margin-bottom: 20px; transition: 0.3s; }
+        input.group-name-input:focus { border-color: #ff9800; background: #fff8e1; outline: none; }
+        
+        .data-row { display: flex; margin-bottom: 10px; align-items: center; justify-content: center; width: 100%; }
+        .row-label { font-size: 0.85rem; color: #546e7a; width: 60px; text-align: right; margin-right: 8px; font-weight: bold; }
+        input[type="text"].data-val { width: 100%; max-width: 140px; padding: 10px; font-family: 'Sarabun', sans-serif; font-size: 1.1rem; text-align: center; background-color: var(--cell-bg); border: 2px solid #b3e5fc; border-radius: 8px; color: #333; font-weight: 600; transition: all 0.2s ease; }
+        input[type="text"].data-val:focus { background-color: var(--cell-focus); border-color: var(--cell-focus-border); box-shadow: 0 0 10px rgba(255, 152, 0, 0.4); outline: none; transform: scale(1.03); color: #d84315; }
+        
+        /* สไตล์ตาราง */
+        .table-responsive { width: 100%; overflow-x: auto; margin: 15px 0 25px 0; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); background: #fff; }
+        table { width: 100%; border-collapse: collapse; font-size: 1rem; background: #fff; min-width: 500px; }
+        th, td { border: 1px solid #dcedc8; padding: 12px 10px; text-align: center; }
+        th { font-weight: bold; background-color: #dcedc8; color: #33691e; }
+        td.sub-header { background-color: #f1f8e9; font-weight: bold; text-align: left; padding-left: 20px; color: #2e7d32;}
+        td.left-align { text-align: left; padding-left: 15px;}
+        tr:nth-child(even) { background-color: #fcfdfa; }
+        
+        /* กล่องแปลผลการทดลองแบบใหม่ ละเอียด เป็นระเบียบ */
+        #result-section { display: none; background: #f9fbe7; padding: 30px; border-radius: 15px; border: 2px solid #dce775; margin-top: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); width: 100%; }
+        #result-section h3 { color: #2e7d32; text-align: center; border-bottom: 3px dashed #cddc39; padding-bottom: 15px; margin-top: 0; font-size: 1.6rem; }
+        .exp-box { background: white; border: 1px solid #c5e1a5; border-radius: 10px; padding: 25px; margin-top: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-left: 6px solid #8bc34a; }
+        .exp-title { font-weight: bold; color: #2e7d32; font-size: 1.2rem; border-bottom: 1px dashed #a5d6a7; padding-bottom: 10px; margin-bottom: 15px; margin-top: 0; }
+        .exp-text { font-size: 1.1rem; line-height: 1.7; color: #333; margin-bottom: 15px; }
+        .exp-highlight { font-weight: bold; color: #000; }
+        .exp-note { background: #f1f8e9; padding: 15px; border-radius: 8px; font-size: 1.05rem; margin-top: 15px; color: #33691e; border-left: 4px solid #81c784; }
+        .exp-danger { border-left-color: #f44336; background: #ffebee; color: #c62828; }
+        
+        #history-section { display: none; background: #fff3e0; padding: 25px; border-radius: 15px; border: 2px solid #ffb74d; margin-bottom: 25px; box-shadow: 0 8px 15px rgba(0,0,0,0.1); width: 100%; }
+        .history-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #ffb74d; padding-bottom: 15px; margin-bottom: 20px; }
+        .history-close-btn { background: #e53935; color: white; border: none; border-radius: 8px; padding: 8px 15px; cursor: pointer; font-weight: bold; font-family: 'Sarabun', sans-serif; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
+        .history-close-btn:hover { background: #c62828; transform: translateY(-1px); }
+        .history-item { background: #ffffff; padding: 15px 20px; border: 1px solid #ffe0b2; border-radius: 10px; margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 15px; justify-content: space-between; align-items: center; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .history-item:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.1); transform: translateY(-2px); border-color: #ffcc80;}
+        .history-actions { display: flex; gap: 8px; }
+        .btn-hist-load { background: #4caf50; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-family: 'Sarabun', sans-serif; font-weight: 600; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+        .btn-hist-load:hover { background: #388e3c; }
+        .btn-hist-del { background: #f44336; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-family: 'Sarabun', sans-serif; font-weight: 600; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+        .btn-hist-del:hover { background: #d32f2f; }
+        .btn-show-more { background: #ffe0b2; color: #e65100; border: 2px dashed #ffb74d; width: 100%; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; margin-top: 10px; font-family: 'Sarabun', sans-serif; font-size: 1.1rem; transition: 0.2s;}
+        .btn-show-more:hover { background: #ffcc80; border-style: solid;}
+
+        .counter-section { text-align: center; margin-top: 40px; font-size: 1rem; color: #78909c; padding-top: 20px; border-top: 2px dashed #b0bec5; }
+        .counter-badge { background: #00838f; color: #fff; padding: 5px 15px; border-radius: 15px; font-weight: bold; }
+        .hidden { display: none !important; }
+
+        @media print {
+            body { background: white !important; font-size: 10pt !important; color: black !important; padding: 0 !important; margin: 0 !important; }
+            .container { box-shadow: none !important; border: none !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; border-radius: 0 !important; }
+            .header, .control-panel, .data-section, .counter-section, button, #standard-hint, #history-section { display: none !important; }
+            #result-section { display: block !important; border: none !important; padding: 0 !important; box-shadow: none !important; margin: 0 !important; background: white !important; width: 100% !important; }
+            #result-section h3 { font-size: 16pt !important; color: black !important; border-bottom: 2px solid black !important; padding-bottom: 10px !important; margin-top: 0 !important; }
+            .table-responsive { overflow: visible !important; width: 100% !important; margin: 10px 0 !important; box-shadow: none !important;}
+            table { width: 100% !important; max-width: 100% !important; table-layout: auto !important; border-collapse: collapse !important; border: 1.5px solid black !important;}
+            th, td { padding: 4px 6px !important; font-size: 10pt !important; border: 1px solid black !important; word-wrap: break-word !important; overflow-wrap: break-word !important; word-break: break-word !important; color: black !important;}
+            th { background-color: #e0e0e0 !important; -webkit-print-color-adjust: exact; color: black !important; }
+            td.sub-header { background-color: #f5f5f5 !important; -webkit-print-color-adjust: exact; }
+            tr { page-break-inside: avoid !important; page-break-after: auto !important; }
+            thead { display: table-header-group !important; }
+            tfoot { display: table-footer-group !important; }
+            .exp-box { border: 1px solid black !important; padding: 10px !important; page-break-inside: avoid !important; margin-top: 10px !important; box-shadow: none !important;}
+            .exp-note { border: 1px solid gray !important; background: white !important; }
+            @page { size: A4 portrait; margin: 1.5cm; }
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; border-radius: 10px; }
+            .header h1 { font-size: 1.6rem; } .designer-name { font-size: 1.2rem; }
+            .control-row button { width: 100%; } input[type="text"].filename-input { max-width: 100%; } select { max-width: 100%; }
+            .history-item { flex-direction: column; align-items: stretch; text-align: left; }
+            .history-actions { justify-content: flex-start; }
+            .btn-hist-load, .btn-hist-del { flex: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="mainAppContainer">
+    <div class="header">
+        <h1>โปรแกรมวิเคราะห์สถิติเพื่องานด้านการเพาะเลี้ยงสัตว์น้ำ</h1>
+        <h3 class="designer-name">ออกแบบและพัฒนาโปรแกรมโดย รศ.ดร.เจษฎา อิสเหาะ</h3>
+        <div class="app-version-wrapper">
+            <div class="app-version">เวอร์ชั่น 1-2569 (19 สิงหาคม 2569)</div>
+        </div>
+    </div>
+
+    <div class="control-panel">
+        <div class="test-selector-wrapper">
+            <label for="testType">เลือกแผนการทดลอง / การวิเคราะห์:</label>
+            <select id="testType" onchange="switchTestType()">
+                <option value="indep">Two Independent Samples T-test</option>
+                <option value="paired">Paired Samples T-test</option>
+                <option value="onesample">One Sample T-test</option>
+                <option value="crd">การสุ่มตลอดอย่างสมบูรณ์ - CRD (ANOVA + DMRT)</option>
+                <option value="rcbd">การสุ่มภายในบล็อกสมบูรณ์ - RCBD (ANOVA + DMRT)</option>
+                <option value="latin">การทดลองแบบลาตินสแควร์ - Latin Square (ANOVA + DMRT)</option>
+                <option value="factorial">การทดลองแบบแฟกทอเรียล - Factorial in CRD (ANOVA + DMRT)</option>
+                <option value="factorial_rcbd">การทดลองแบบแฟกทอเรียล - Factorial in RCBD (ANOVA + DMRT)</option>
+                <option value="nested">การทดลองแบบสุ่มซ้อน - Nested Design (ANOVA + DMRT)</option>
+                <option value="correlation">การวิเคราะห์สหสัมพันธ์ (Correlation)</option>
+                <option value="regression">การวิเคราะห์การถดถอยพหุคูณ (Multiple Linear Regression / Stepwise)</option>
+                <option value="regression_dummy">การวิเคราะห์การถดถอย (มีตัวแปรเชิงคุณภาพ/Dummy)</option>
+                <option value="chisq_nonpar">การทดสอบไคสแควร์ (Nonparametric / Goodness of Fit)</option>
+                <option value="chisq_cross" selected>การทดสอบไคสแควร์ (Crosstabs / Independence)</option>
+            </select>
+        </div>
+
+        <div class="var-setup-box hidden" id="var-setup-controls">
+            <label style="font-weight:bold; color:#e65100;">ตัวแปรตาม (Dependent Variable):</label>
+            <input type="text" id="depVarName" class="filename-input" value="ผลผลิต" style="width:200px;">
+            <label style="font-weight:bold; color:#e65100; margin-left: 10px;">หน่วย (Unit):</label>
+            <input type="text" id="depVarUnit" class="filename-input" value="กก./ไร่" style="width:100px;">
+        </div>
+
+        <div class="control-row hidden" id="crd-controls">
+            <button class="btn-trt" onclick="addColumn()">+ เพิ่มคอลัมน์ตัวแปร</button>
+            <button class="btn-remove" onclick="removeColumn()">- ลดคอลัมน์ตัวแปร</button>
+        </div>
+
+        <div class="control-row hidden" id="advanced-controls" style="background:#e3f2fd; padding:15px; border-radius:10px; border:1px solid #90caf9;">
+            <label style="font-weight:bold; color:#0d47a1;" id="advFac1Label">ชื่อปัจจัย 1:</label>
+            <input type="text" id="fac1Name" class="filename-input" value="ปัจจัย A" style="width:120px;">
+            <label style="font-weight:bold; color:#0d47a1;">ระดับ:</label>
+            <input type="number" id="fac1Levels" class="test-value-input" value="2" min="2" style="width:60px;">
+            
+            <label style="font-weight:bold; color:#0d47a1; margin-left: 10px;" id="advFac2Label">ชื่อปัจจัย 2:</label>
+            <input type="text" id="fac2Name" class="filename-input" value="ปัจจัย B" style="width:120px;">
+            <label style="font-weight:bold; color:#0d47a1;">ระดับ:</label>
+            <input type="number" id="fac2Levels" class="test-value-input" value="3" min="2" style="width:60px;">
+            
+            <button class="btn-trt" onclick="setupAdvancedGrid()">✅ สร้างตารางใหม่</button>
+        </div>
+
+        <div class="control-row">
+            <button class="btn-add" onclick="addRow()">+ เพิ่มแถวข้อมูล</button>
+            <button class="btn-remove" onclick="removeRow()">- ลดแถวข้อมูล</button>
+            <button class="btn-clear" onclick="clearData()">🧹 ล้างข้อมูล</button>
+            <button class="btn-exit" onclick="exitProgram()">❌ ออกจากโปรแกรม</button>
+        </div>
+
+        <div class="control-row">
+            <input type="text" id="saveFileName" class="filename-input" placeholder="ตั้งชื่อไฟล์ข้อมูลที่นี่...">
+            <button class="btn-save" onclick="saveData()">💾 บันทึก</button>
+            <button class="btn-load" onclick="document.getElementById('fileInput').click()">📂 โหลดไฟล์จากคอมพิวเตอร์</button>
+            <input type="file" id="fileInput" style="display:none" accept=".json" onchange="loadDataFromFile(event)">
+            <button class="btn-history" onclick="toggleHistory()">🕒 เปิดประวัติย้อนหลัง</button>
+            <button class="btn-template" onclick="loadTemplate()">📋 โหลดข้อมูลแม่แบบ</button>
+        </div>
+        
+        <div class="control-row hidden" id="onesample-controls" style="background:#fff9c4; padding:15px; border-radius:10px; border:1px solid #fbc02d;">
+            <label style="font-weight:bold; color:#b71c1c; font-size: 1.1rem;">ค่าเกณฑ์มาตรฐานที่คาดหวัง (Test Value):</label>
+            <input type="number" id="testValue" class="test-value-input" value="650" style="font-size: 1.1rem;">
+        </div>
+    </div>
+
+    <!-- ส่วนประวัติ -->
+    <div id="history-section">
+        <div class="history-header">
+            <h4 style="margin:0; color: #e65100; font-size: 1.3rem;">📂 ประวัติข้อมูลที่เคยบันทึกไว้ในเบราว์เซอร์นี้</h4>
+            <button class="history-close-btn" onclick="closeHistory()">❌ ปิดหน้าต่าง</button>
+        </div>
+        <div id="history-list"></div>
+    </div>
+
+    <div style="text-align: center; color: #004d40; margin-bottom: 10px; font-weight: 700; background: #e0f2f1; padding: 10px; border-radius: 8px; border: 1px solid #80cbc4;" id="standard-hint">
+        💡 คำแนะนำ: สำหรับ Chi-Square Crosstab คอลัมน์ซ้ายสุดสามารถป้อน "ชื่อตัวชี้วัด (Text)" เพื่อให้ระบบนำไปใช้เป็นชื่อแถวได้
+    </div>
+
+    <div class="data-section" id="data-grid"></div>
+
+    <button class="btn-analyze" onclick="analyzeData()">📊 ประมวลผลทางสถิติ</button>
+
+    <div id="result-section">
+        <h3>ผลการวิเคราะห์ข้อมูล</h3>
+        <!-- ปุ่ม Print พิเศษ -->
+        <button class="btn-print" onclick="window.print()">🖨️ พิมพ์เอกสาร / Save as PDF</button>
+        <div id="result-tables"></div>
+        <div id="result-explanation"></div>
+    </div>
+
+    <div class="counter-section">
+        ยอดเข้าใช้งานโปรแกรมสะสม: <span class="counter-badge" id="viewCount">กำลังโหลด...</span> ครั้ง
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // 1. ตัวแปร Global & แม่แบบ (Templates)
+    // ==========================================
+    let currentTest = 'chisq_cross'; 
+    let rowsCount = 9;
+    let colsCount = 3;
+    let showingAllHistory = false;
+
+    const TEMPLATES = {
+        'indep': { type: 'indep', columns: [{name: 'อาหารสูตร A', data: [120, 125, 122, 128, 130]}, {name: 'อาหารสูตร B', data: [140, 142, 145, 148, 140]}], fileName: 'แม่แบบ_IndepTTest', depVarName: 'ผลผลิต', depVarUnit: 'กก.' },
+        'paired': { type: 'paired', columns: [{name: 'ก่อนเปลี่ยนน้ำ', data: [4.2, 4.5, 4.1, 4.8, 4.6]}, {name: 'หลังเปลี่ยนน้ำ', data: [1.2, 1.5, 1.8, 2.0, 2.1]}], fileName: 'แม่แบบ_PairedTTest', depVarName: 'ปริมาณแอมโมเนีย', depVarUnit: 'mg/L' },
+        'onesample': { type: 'onesample', columns: [{name: 'ผลผลิตกุ้ง', data: [640, 650, 660, 645, 675]}], testValue: 650, fileName: 'แม่แบบ_OneSample', depVarName: 'ผลผลิต', depVarUnit: 'กก./ไร่' },
+        'crd': { type: 'crd', columns: [{name: 'สูตร 1 (โปรตีน 20%)', data: [10.5, 11.2, 10.8, 11.0]}, {name: 'สูตร 2 (โปรตีน 30%)', data: [14.5, 15.0, 14.8, 14.2]}, {name: 'สูตร 3 (โปรตีน 40%)', data: [18.5, 19.2, 18.8, 19.0]}], fileName: 'แม่แบบ_CRD', depVarName: 'อัตราการเจริญเติบโต', depVarUnit: 'g/day' },
+        'rcbd': { type: 'rcbd', columns: [{name: 'พันธุ์ปลา A', data: [45, 48, 50]}, {name: 'พันธุ์ปลา B', data: [58, 60, 65]}, {name: 'พันธุ์ปลา C', data: [50, 52, 55]}], fileName: 'แม่แบบ_RCBD', depVarName: 'ผลผลิต', depVarUnit: 'กก.' },
+        'latin': { type: 'latin', columns: [{name: 'A', data: [1.2, 1.5, 1.4, 1.6]}, {name: 'B', data: [1.1, 1.3, 1.5, 1.6]}, {name: 'C', data: [1.4, 1.4, 1.4, 1.4]}, {name: 'D', data: [1.3, 1.3, 1.3, 1.3]}], fileName: 'แม่แบบ_LatinSquare', depVarName: 'น้ำหนักลูกปลา', depVarUnit: 'กรัม' },
+        'factorial': { type: 'factorial', fac1Name: 'อาหาร', fac1Levels: 2, fac2Name: 'มื้อ', fac2Levels: 2, columns: [{name: 'อาหาร 3% * 2 มื้อ', data: [15, 16, 17]}, {name: 'อาหาร 3% * 3 มื้อ', data: [18, 19, 17]}, {name: 'อาหาร 5% * 2 มื้อ', data: [20, 21, 19]}, {name: 'อาหาร 5% * 3 มื้อ', data: [25, 26, 24]}], fileName: 'แม่แบบ_Factorial_CRD', depVarName: 'ผลผลิต', depVarUnit: 'กก.' },
+        'factorial_rcbd': { type: 'factorial_rcbd', fac1Name: 'สว่าง', fac1Levels: 2, fac2Name: 'เค็ม', fac2Levels: 2, columns: [{name: 'สว่าง 12ชม. * เค็ม 10ppt', data: [20, 22, 21]}, {name: 'สว่าง 12ชม. * เค็ม 20ppt', data: [25, 27, 26]}, {name: 'สว่าง 24ชม. * เค็ม 10ppt', data: [28, 30, 29]}, {name: 'สว่าง 24ชม. * เค็ม 20ppt', data: [35, 38, 36]}], fileName: 'แม่แบบ_Factorial_RCBD', depVarName: 'ผลผลิต', depVarUnit: 'กก.' },
+        'nested': { type: 'nested', fac1Name: 'พ่อพันธุ์', fac1Levels: 2, fac2Name: 'แม่พันธุ์', fac2Levels: 2, columns: [{name: 'พ่อพันธุ์ 1 (แม่พันธุ์ 1)', data: [100, 105, 102]}, {name: 'พ่อพันธุ์ 1 (แม่พันธุ์ 2)', data: [110, 115, 112]}, {name: 'พ่อพันธุ์ 2 (แม่พันธุ์ 1)', data: [85, 90, 88]}, {name: 'พ่อพันธุ์ 2 (แม่พันธุ์ 2)', data: [90, 95, 92]}], fileName: 'แม่แบบ_Nested', depVarName: 'ผลผลิต', depVarUnit: 'ตัว' },
+        'correlation': { type: 'correlation', columns: [{name: 'ผลผลิต (กก.)', data: [500, 520, 550, 480, 600, 620]}, {name: 'ปริมาณ DO (mg/L)', data: [4.5, 4.8, 5.2, 4.0, 5.8, 6.0]}, {name: 'pH', data: [7.2, 7.4, 7.5, 6.8, 7.8, 7.9]}, {name: 'แอมโมเนีย (mg/L)', data: [0.5, 0.4, 0.3, 0.6, 0.2, 0.1]}], fileName: 'แม่แบบ_Correlation' },
+        'regression': { type: 'regression', columns: [{name: 'ผลผลิต (Y)', data: [800, 850, 900, 750, 950]}, {name: 'ปริมาณ DO (X1)', data: [4.5, 5.0, 5.5, 4.0, 6.0]}, {name: 'แอมโมเนีย (X2)', data: [0.5, 0.4, 0.3, 0.6, 0.2]}], fileName: 'แม่แบบ_Regression', depVarName: 'ผลผลิต', depVarUnit: 'กก./ไร่' },
+        'regression_dummy': { type: 'regression_dummy', columns: [{name: 'Production', data: [800, 850, 900, 750, 950, 1000]}, {name: 'TAN (ppm)', data: [0.5, 0.4, 0.3, 0.6, 0.2, 0.1]}, {name: 'การใช้เครื่องตีน้ำภายในบ่อ', data: ['ไม่ใช้', 'ใช้', 'ใช้', 'ไม่ใช้', 'ใช้', 'ใช้']}], fileName: 'แม่แบบ_Regression_Dummy', depVarName: 'ผลผลิต', depVarUnit: 'กก./ไร่' },
+        'chisq_nonpar': { type: 'chisq_nonpar', columns: [{name: 'Observed (O)', data: [1550, 750, 670, 730]}, {name: 'Expected (E)', data: [1.5, 1, 1, 1]}], fileName: 'แม่แบบ_ChiSq_Goodness' },
+        'chisq_cross': { type: 'chisq_cross', columns: [{name: 'ตัวชี้วัด / รายการ', data: ['ความพึงพอใจระดับ 1', 'ความพึงพอใจระดับ 2', 'ความพึงพอใจระดับ 3', 'ความพึงพอใจระดับ 4', 'ความพึงพอใจระดับ 5']}, {name: 'ระดับชั้นปี 1', data: [12, 33, 23, 6, 0]}, {name: 'ระดับชั้นปี 2', data: [16, 33, 21, 11, 1]}, {name: 'ระดับชั้นปี 3', data: [14, 29, 16, 10, 1]}, {name: 'ระดับชั้นปี 4', data: [16, 21, 25, 28, 0]}], fileName: 'แม่แบบ_ChiSq_Crosstabs' }
+    };
+
+    // ==========================================
+    // 2. ฟังก์ชันคณิตศาสตร์หลัก 
+    // ==========================================
+    const Matrix = {
+        transpose: (m) => m[0].map((_, col) => m.map(row => row[col])),
+        multiply: (a, b) => {
+            let res = Array.from({length: a.length}, () => new Array(b[0].length).fill(0));
+            for (let r = 0; r < a.length; r++) {
+                for (let c = 0; c < b[0].length; c++) {
+                    let sum = 0;
+                    for (let k = 0; k < a[0].length; k++) sum += a[r][k] * b[k][c];
+                    res[r][c] = sum;
+                }
+            }
+            return res;
+        },
+        invert: (m) => {
+            let n = m.length;
+            let a = m.map(row => [...row]);
+            let inv = Array.from({length: n}, (_, i) => Array.from({length: n}, (_, j) => i === j ? 1 : 0));
+            for (let i = 0; i < n; i++) {
+                let pivot = a[i][i];
+                if (Math.abs(pivot) < 1e-10) {
+                    for (let r = 0; r < n; r++) a[r][r] += 1e-6; 
+                    pivot = a[i][i];
+                }
+                for (let j = 0; j < n; j++) { a[i][j] /= pivot; inv[i][j] /= pivot; }
+                for (let k = 0; k < n; k++) {
+                    if (k !== i) {
+                        let factor = a[k][i];
+                        for (let j = 0; j < n; j++) { a[k][j] -= factor * a[i][j]; inv[k][j] -= factor * inv[i][j]; }
+                    }
+                }
+            }
+            return inv;
+        }
+    };
+
+    function fitMLR(Y_arr, X_matrix, xNames) {
+        let n = Y_arr.length; let k = X_matrix[0].length;
+        let X = []; let Y = [];
+        for (let i = 0; i < n; i++) { X.push([1].concat(X_matrix[i])); Y.push([Y_arr[i]]); }
+        
+        let XT = Matrix.transpose(X); 
+        let XTX = Matrix.multiply(XT, X); 
+        let XTX_inv = Matrix.invert(XTX); 
+        let XTY = Matrix.multiply(XT, Y); 
+        let B = Matrix.multiply(XTX_inv, XTY); 
+        let B_flat = B.map(b => b[0]);
+        
+        let Y_pred = Matrix.multiply(X, B).map(y => y[0]);
+        let meanY = Y_arr.reduce((a,b)=>a+b,0) / n;
+        
+        let SST = 0, SSReg = 0, SSRes = 0;
+        for (let i = 0; i < n; i++) {
+            SST += Math.pow(Y_arr[i] - meanY, 2); 
+            SSReg += Math.pow(Y_pred[i] - meanY, 2); 
+            SSRes += Math.pow(Y_arr[i] - Y_pred[i], 2);
+        }
+        
+        if (SSRes < 1e-9) SSRes = 0; if (SSReg < 1e-9) SSReg = 0; if (SST < 1e-9) SST = 0;
+
+        let dfReg = k; let dfRes = n - k - 1;
+        if (dfRes <= 0) throw new Error("จำนวนข้อมูล (N) มีน้อยเกินไปเมื่อเทียบกับตัวแปรที่ใช้ครับ กรุณาเพิ่มข้อมูลให้มากขึ้น");
+
+        let MSReg = dfReg > 0 ? SSReg / dfReg : 0; 
+        let MSRes = dfRes > 0 ? SSRes / dfRes : 0;
+        let F = MSRes > 0 ? MSReg / MSRes : 0; 
+        
+        let pF = 1.0;
+        if (dfReg > 0 && dfRes > 0 && MSRes > 0) {
+            try { pF = 1 - jStat.centralF.cdf(F, dfReg, dfRes); } catch(e) { pF = 1.0; }
+        }
+        if (isNaN(pF) || pF < 0) pF = 1.0;
+
+        let R2 = SST > 0 ? SSReg / SST : 0; 
+        if(R2 > 1) R2 = 1; else if(R2 < 0) R2 = 0;
+        let R = Math.sqrt(R2);
+        let adjR2 = 1 - ((1 - R2) * (n - 1) / dfRes); 
+        let stdErrorEst = Math.sqrt(MSRes);
+        
+        let SE_B = []; let t_B = []; let p_B = []; let beta = []; let lowerB = []; let upperB = [];
+        let varY = SST / (n - 1); let sdY = Math.sqrt(varY); 
+        let tCrit = jStat.studentt.inv(0.975, dfRes); 
+        
+        for (let j = 0; j <= k; j++) {
+            let se = Math.sqrt(Math.max(0, MSRes * XTX_inv[j][j])); SE_B.push(se);
+            let t = se > 0 ? B_flat[j] / se : 0; t_B.push(t);
+            let p = 1.0;
+            if (dfRes > 0) { try { p = (1 - jStat.studentt.cdf(Math.abs(t), dfRes)) * 2; } catch(e) { p = 1.0; } }
+            p_B.push(p);
+            
+            lowerB.push(B_flat[j] - tCrit * se); upperB.push(B_flat[j] + tCrit * se);
+            if (j === 0) { 
+                beta.push(null); 
+            } else {
+                let colX = X_matrix.map(row => row[j-1]); 
+                let meanX = colX.reduce((a,b)=>a+b,0) / n;
+                let varX = colX.reduce((sum, val) => sum + Math.pow(val - meanX, 2), 0) / (n - 1); 
+                let sdX = Math.sqrt(varX);
+                beta.push(sdY > 0 ? B_flat[j] * (sdX / sdY) : 0);
+            }
+        }
+        return { R, R2, adjR2, stdErrorEst, SSReg, SSRes, SST, dfReg, dfRes, MSReg, MSRes, F, pF, B: B_flat, SE_B, t_B, p_B, beta, lowerB, upperB, xNames };
+    }
+
+    function getStats(arr) {
+        const n = arr.length;
+        if(n === 0) return { mean: 0, variance: 0, sd: 0, n: 0, se: 0, sum: 0, sumSq: 0 };
+        const sum = arr.reduce((a, b) => a + b, 0);
+        const mean = sum / n;
+        const sumSq = arr.reduce((a, b) => a + (b * b), 0);
+        const variance = arr.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (n > 1 ? n - 1 : 1);
+        const sd = Math.sqrt(variance);
+        return { mean, variance, sd, n, se: sd / Math.sqrt(n), sum, sumSq };
+    }
+
+    function formatP(val) {
+        if (val === null || val === undefined || isNaN(val) || val === "") return "";
+        if (val < 0.001 && val >= 0) return ".000";
+        let s = val.toFixed(3);
+        if (s.startsWith('0.')) return s.substring(1);
+        if (s.startsWith('-0.')) return '-' + s.substring(2);
+        return s;
+    }
+
+    function calculateLevene(allDataArr) {
+        let totalN = 0; let grandSumZ = 0; let zData = []; let zStats = [];
+        allDataArr.forEach(arr => {
+            if(arr.length===0) return;
+            let mean = arr.reduce((a,b)=>a+b,0)/arr.length;
+            let zArr = arr.map(v => Math.abs(v - mean));
+            zData.push(zArr); let s = getStats(zArr); zStats.push(s);
+            totalN += s.n; grandSumZ += s.sum;
+        });
+        const grandMeanZ = grandSumZ / totalN;
+        let SSTrZ = 0, SSTZ = 0;
+        zStats.forEach((s, i) => {
+            SSTrZ += s.n * Math.pow(s.mean - grandMeanZ, 2);
+            zData[i].forEach(v => SSTZ += Math.pow(v - grandMeanZ, 2));
+        });
+        let SSEZ = SSTZ - SSTrZ;
+        const df1 = zStats.length - 1; const df2 = totalN - zStats.length;
+        const F = df2 > 0 ? (SSTrZ/df1) / (SSEZ/df2) : 0;
+        let p = 1.0;
+        try { p = 1 - jStat.centralF.cdf(F, df1, df2); } catch(e) { p = 1.0; }
+        return { F, df1, df2, p };
+    }
+
+    // ฟังก์ชันกรองคอลัมน์ ID ทิ้งแบบ เด็ดขาด 100% 
+    function filterIDColumn(validCols) {
+        if (validCols.length <= 1) return validCols;
+        
+        let firstCol = validCols[0];
+        let nameStr = firstCol.name.replace(/\s+/g, '').toLowerCase();
+        
+        let isIdHeader = /(ตัวชี้วัด|รายการ|ตัวที่|ซ้ำ|ลำดับ|id|no|ครั้งที่|rep|^ที่$)/i.test(nameStr);
+        
+        let numericData = firstCol.data.map(v => parseFloat(String(v).replace(/[^\d.-]/g, '')));
+        let isNumeric = numericData.length > 0 && numericData.every(v => !isNaN(v));
+        let isSeq = isNumeric && numericData.length >= 2 && numericData[0] === 1 && numericData.every((val, idx) => Math.abs(val - (1 + idx)) < 0.001);
+        
+        if (isIdHeader || isSeq) {
+            validCols.shift(); 
+        }
+        return validCols;
+    }
+
+    function generateDescriptiveTable(title, statsArr) {
+        let html = `<h4 style="text-align:left; color:#2e7d32; font-size:1.15rem; margin-top:20px; margin-bottom:5px;">ตารางสถิติเชิงพรรณนา (Descriptive Statistics): ${title}</h4>
+        <div class="table-responsive" style="margin-top:0;"><table><tr><th class="left-align">รายการ/ระดับ</th><th>N</th><th>Mean</th><th>Std. Deviation</th><th>Std. Error</th></tr>`;
+        for(let i=0; i<statsArr.length; i++) {
+            html += `<tr><td class="left-align">${statsArr[i].name}</td><td>${statsArr[i].n}</td><td>${statsArr[i].mean.toFixed(4)}</td><td>${statsArr[i].sd.toFixed(4)}</td><td>${statsArr[i].se.toFixed(4)}</td></tr>`;
+        }
+        html += `</table></div>`;
+        return html;
+    }
+
+    function generateDMRT_HTML(factorName, statsArr, MSE, dfE) {
+        let sorted = [...statsArr].sort((a,b) => b.mean - a.mean);
+        let subsets = []; let sortedAsc = [...sorted].reverse();
+        
+        for(let i=0; i<sortedAsc.length; i++) {
+            let added = false;
+            for(let s=0; s<subsets.length; s++) {
+                let canJoin = true;
+                for(let member of subsets[s]) {
+                    let se = Math.sqrt(MSE * (1/sortedAsc[i].n + 1/member.n));
+                    let t = Math.abs(sortedAsc[i].mean - member.mean) / se;
+                    let pPair = 1.0;
+                    try { pPair = (1 - jStat.studentt.cdf(t, dfE)) * 2; } catch(e) {}
+                    if(pPair < 0.05) { canJoin = false; break; }
+                }
+                if(canJoin) { subsets[s].push(sortedAsc[i]); added = true; }
+            }
+            if(!added) { subsets.push([sortedAsc[i]]); }
+        }
+
+        let depVar = document.getElementById('depVarName').value || 'ผลผลิต';
+
+        let html = `<h4 style="text-align:left; color:#2e7d32; font-size:1.15rem; margin-top:20px; margin-bottom:5px;">การจัดกลุ่มความแตกต่าง (Duncan's Multiple Range Test): ${depVar}</h4>
+        <div class="table-responsive" style="margin-top:0;"><table><tr><th class="left-align">ชุดการทดลอง</th><th>N</th>`;
+        for(let s=0; s<subsets.length; s++) html += `<th>Subset ${s+1}</th>`;
+        html += `</tr>`;
+        for(let i=0; i<sorted.length; i++) {
+            html += `<tr><td class="left-align">${sorted[i].name}</td><td>${sorted[i].n}</td>`;
+            for(let s=0; s<subsets.length; s++) {
+                let inSubset = subsets[s].find(t => t.name === sorted[i].name);
+                html += inSubset ? `<td>${sorted[i].mean.toFixed(4)}</td>` : `<td></td>`;
+            }
+            html += `</tr>`;
+        }
+        html += `</table></div>`;
+
+        let bestGroup = sorted[0]; 
+        let bestSub = subsets.find(sub => sub.find(t => t.name === bestGroup.name));
+        let equivalentBest = bestSub.map(t => t.name);
+        let otherGroups = sorted.filter(t => !equivalentBest.includes(t.name));
+
+        let exp = `<div class="exp-box">
+            <h4 class="exp-title">อธิบายผลและสรุปการเปรียบเทียบพหุคูณ (${factorName}):</h4>
+            <p class="exp-text">จากการทดสอบอิทธิพลของ <strong>${factorName}</strong> ที่มีต่อ <strong>${depVar}</strong> พบว่า <span class="exp-highlight">มีความแตกต่างกัน</span> อย่างมีนัยสำคัญทางสถิติ (P < 0.05)</p>
+            <p class="exp-text" style="color:#d32f2f; font-weight:bold;">📌 ข้อสรุปเชื่อมโยงกับเนื้อหา:</p>
+            <ul style="list-style-type: none; padding-left: 15px;" class="exp-text">`;
+
+        if (equivalentBest.length === sorted.length) {
+            exp = `<div class="exp-box">
+            <h4 class="exp-title">อธิบายผลและสรุปการเปรียบเทียบพหุคูณ (${factorName}):</h4>
+            <p class="exp-text">จากการทดสอบอิทธิพลของ <strong>${factorName}</strong> ที่มีต่อ <strong>${depVar}</strong> พบว่า <span class="exp-highlight">ไม่มีความแตกต่างกัน</span> อย่างมีนัยสำคัญทางสถิติ (P > 0.05)</p>
+            <p class="exp-text" style="color:#d32f2f; font-weight:bold;">📌 ข้อสรุปเชื่อมโยงกับเนื้อหา:</p>
+            <ul style="list-style-type: none; padding-left: 15px;" class="exp-text">
+                <li>แสดงให้เห็นว่าทุกระดับของ <strong>${factorName}</strong> สามารถกระตุ้นหรือส่งผลให้ <strong>${depVar}</strong> ได้ดีเทียบเท่ากันทั้งหมด</li>
+            </ul>
+            <div class="exp-note">
+                💡 <strong>ฟันธง:</strong> ในการนำไปปฏิบัติจริง ท่านสามารถพิจารณาเลือกใช้กลุ่มหรือระดับใดก็ได้ โดยอิงจากความสะดวก หรือเลือกวิธีที่ประหยัดต้นทุนที่สุดได้เลยครับ
+            </div></div>`;
+        } else {
+            let bestStr = equivalentBest.join(' และ ');
+            exp += `<li style="margin-bottom:8px;">จากการศึกษาพบว่า <strong>${bestStr}</strong> เป็นระดับ/กลุ่มที่ส่งผลให้ <strong>${depVar}</strong> <span class="exp-highlight">สูงที่สุด</span> (มีค่าเฉลี่ยเท่ากับ ${bestGroup.mean.toFixed(4)})</li>`;
+            
+            if (otherGroups.length > 0) {
+                let otherStr = otherGroups.map(t => t.name).join(', ');
+                exp += `<li>👉 แต่ <strong>มีความแตกต่างจาก</strong> ${otherStr} อย่างมีนัยสำคัญทางสถิติ (P < 0.05) <br> <span style="font-size:0.95rem; color:#666;">(กลุ่มเหล่านี้ส่งผลให้ค่า ${depVar} ด้อยกว่าอย่างชัดเจน)</span></li>`;
+            }
+            exp += `</ul>
+            <div class="exp-note">
+                💡 <strong>ฟันธง:</strong> เพื่อให้เกิดผลสัมฤทธิ์ของ <strong>${depVar}</strong> ดีที่สุดในงานที่ท่านกำลังศึกษา หรือนำไปปฏิบัติใช้จริง ขอแนะนำให้ใช้ <strong style="color:#e65100;">${bestStr}</strong> เป็นตัวเลือกหลักครับ
+            </div></div>`;
+        }
+        return { html, exp };
+    }
+
+
+    // ==========================================
+    // 3. ฟังก์ชันจัดการ UI ตาราง
+    // ==========================================
+    window.onload = function() { switchTestType(); updateCounter(); };
+
+    function getRowLabel(r) {
+        if (['regression', 'regression_dummy', 'correlation', 'chisq_nonpar', 'chisq_cross'].includes(currentTest)) {
+            return `ข้อมูล ${r+1}`;
+        }
+        return `ซ้ำที่ ${r+1}`;
+    }
+
+    function switchTestType() {
+        currentTest = document.getElementById('testType').value;
+        const grid = document.getElementById('data-grid');
+        const crdControls = document.getElementById('crd-controls');
+        const advancedControls = document.getElementById('advanced-controls');
+        const varSetupControls = document.getElementById('var-setup-controls');
+        const onesampleControls = document.getElementById('onesample-controls');
+        const resSec = document.getElementById('result-section');
+        
+        grid.innerHTML = ''; resSec.style.display = 'none';
+        document.getElementById('result-tables').innerHTML = '';
+        document.getElementById('result-explanation').innerHTML = '';
+
+        crdControls.classList.add('hidden'); 
+        advancedControls.classList.add('hidden');
+        varSetupControls.classList.add('hidden');
+        onesampleControls.classList.add('hidden');
+
+        if (['crd', 'rcbd', 'latin', 'factorial', 'factorial_rcbd', 'nested'].includes(currentTest)) {
+            varSetupControls.classList.remove('hidden');
+        }
+
+        if (currentTest === 'indep') { colsCount = 2; buildGrid(['กลุ่มที่ 1', 'กลุ่มที่ 2']); } 
+        else if (currentTest === 'paired') { colsCount = 2; buildGrid(['ก่อน (Before)', 'หลัง (After)']); } 
+        else if (currentTest === 'onesample') { colsCount = 1; onesampleControls.classList.remove('hidden'); buildGrid(['ผลผลิต/ข้อมูล']); } 
+        else if (currentTest === 'crd') { colsCount = 3; crdControls.classList.remove('hidden'); buildGrid(['ชุดทดลอง 1', 'ชุดทดลอง 2', 'ชุดทดลอง 3']); } 
+        else if (currentTest === 'rcbd') { colsCount = 3; crdControls.classList.remove('hidden'); buildGrid(['ชุดทดลอง 1', 'ชุดทดลอง 2', 'ชุดทดลอง 3']); } 
+        else if (currentTest === 'latin') { colsCount = 3; crdControls.classList.remove('hidden'); buildGrid(['พันธุ์ A', 'พันธุ์ B', 'พันธุ์ C']); } 
+        else if (currentTest === 'factorial' || currentTest === 'factorial_rcbd') { 
+            advancedControls.classList.remove('hidden');
+            document.getElementById('advFac1Label').innerText = "ชื่อปัจจัย 1:"; document.getElementById('advFac2Label').innerText = "ชื่อปัจจัย 2:";
+            setupAdvancedGrid();
+        } 
+        else if (currentTest === 'nested') { 
+            advancedControls.classList.remove('hidden');
+            document.getElementById('advFac1Label').innerText = "ปัจจัยหลัก (Main):"; document.getElementById('advFac2Label').innerText = "ปัจจัยซ้อน (Nested):";
+            document.getElementById('fac1Name').value = "พ่อพันธุ์"; document.getElementById('fac2Name').value = "แม่พันธุ์";
+            setupAdvancedGrid();
+        } 
+        else if (currentTest === 'correlation') { 
+            colsCount = 4; crdControls.classList.remove('hidden'); 
+            buildGrid(['ผลผลิต (ตัวแปรตาม)', 'ปริมาณ DO', 'ความเป็นกรดด่าง', 'ปริมาณแอมโมเนีย']); 
+        } 
+        else if (currentTest === 'regression') { 
+            colsCount = 3; crdControls.classList.remove('hidden'); 
+            buildGrid(['ผลผลิต (Y)', 'ความเป็นกรดเป็นด่าง (X1)', 'ปริมาณออกซิเจนที่ละลายในน้ำ (X2)']); 
+        }
+        else if (currentTest === 'regression_dummy') { 
+            colsCount = 3; crdControls.classList.remove('hidden'); 
+            buildGrid(['ผลผลิต (Y)', 'ปริมาณแอมโมเนียรวม (X1)', 'การใช้เครื่องตีน้ำภายในบ่อ (X2)']); 
+        }
+        else if (currentTest === 'chisq_nonpar') { colsCount = 2; buildGrid(['ความถี่ที่สังเกตได้ (Observed)', 'สัดส่วนที่คาดหวัง (Expected Ratio)']); } 
+        else if (currentTest === 'chisq_cross') { colsCount = 3; crdControls.classList.remove('hidden'); buildGrid(['ระดับปัจจัย 1', 'ระดับปัจจัย 2', 'ระดับปัจจัย 3']); } 
+    }
+
+    function setupAdvancedGrid() {
+        let a = parseInt(document.getElementById('fac1Levels').value);
+        let b = parseInt(document.getElementById('fac2Levels').value);
+        let nameA = document.getElementById('fac1Name').value;
+        let nameB = document.getElementById('fac2Name').value;
+        if (isNaN(a) || a < 2) { a = 2; document.getElementById('fac1Levels').value = 2; }
+        if (isNaN(b) || b < 2) { b = 2; document.getElementById('fac2Levels').value = 2; }
+        colsCount = a * b;
+        let headers = [];
+        if (currentTest === 'nested') {
+            for (let i = 1; i <= a; i++) { for (let j = 1; j <= b; j++) headers.push(`${nameA} ${i} (${nameB} ${j})`); }
+        } else {
+            for (let i = 1; i <= a; i++) { for (let j = 1; j <= b; j++) headers.push(`${nameA}(${i})*${nameB}(${j})`); }
+        }
+        buildGrid(headers);
+    }
+
+    function buildGrid(headers) {
+        const grid = document.getElementById('data-grid');
+        grid.innerHTML = '';
+        for (let c = 0; c < colsCount; c++) {
+            let html = `<div class="group-container" id="col-container-${c}">
+                        <input type="text" id="header-${c}" class="group-name-input" value="${headers[c] || 'กลุ่ม ' + (c+1)}">
+                        <div id="inputs-col-${c}">`;
+            for (let r = 0; r < rowsCount; r++) {
+                html += `<div class="data-row"><span class="row-label">${getRowLabel(r)}</span><input type="text" class="data-val col-${c}" data-col="${c}" data-row="${r}"></div>`;
+            }
+            html += `</div></div>`;
+            grid.insertAdjacentHTML('beforeend', html);
+        }
+    }
+
+    function addRow() {
+        rowsCount++;
+        for (let c = 0; c < colsCount; c++) {
+            document.getElementById(`inputs-col-${c}`).insertAdjacentHTML('beforeend', `<div class="data-row"><span class="row-label">${getRowLabel(rowsCount-1)}</span><input type="text" class="data-val col-${c}" data-col="${c}" data-row="${rowsCount-1}"></div>`);
+        }
+    }
+
+    function removeRow() {
+        if (rowsCount <= 2) return alert('ต้องมีข้อมูลอย่างน้อย 2 แถวสำหรับการวิเคราะห์');
+        for (let c = 0; c < colsCount; c++) {
+            const container = document.getElementById(`inputs-col-${c}`);
+            container.removeChild(container.lastElementChild);
+        }
+        rowsCount--;
+    }
+
+    function addColumn() {
+        colsCount++; const c = colsCount - 1;
+        let html = `<div class="group-container" id="col-container-${c}">
+                    <input type="text" id="header-${c}" class="group-name-input" value="ตัวแปร/กลุ่ม ${c+1}">
+                    <div id="inputs-col-${c}">`;
+        for (let r = 0; r < rowsCount; r++) html += `<div class="data-row"><span class="row-label">${getRowLabel(r)}</span><input type="text" class="data-val col-${c}" data-col="${c}" data-row="${r}"></div>`;
+        html += `</div></div>`;
+        document.getElementById('data-grid').insertAdjacentHTML('beforeend', html);
+    }
+
+    function removeColumn() {
+        if (colsCount <= 2) return alert('การวิเคราะห์นี้ต้องมีอย่างน้อย 2 กลุ่ม');
+        const grid = document.getElementById('data-grid');
+        grid.removeChild(grid.lastElementChild); colsCount--;
+    }
+
+    // ==========================================
+    // Smart Paste Algorithm (สกัดคอลัมน์ขยะทิ้งตั้งแต่ตอนวาง)
+    // ==========================================
+    document.addEventListener('paste', function(e) {
+        const target = e.target;
+        if (target.tagName !== 'INPUT' || !target.classList.contains('data-val')) return;
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text');
+        const rowsRaw = text.split(/\r\n|\n|\r/);
+        
+        let parsedRows = [];
+        for (let r = 0; r < rowsRaw.length; r++) {
+            if (rowsRaw[r].trim() === '' && r === rowsRaw.length - 1) continue;
+            parsedRows.push(rowsRaw[r].split(/\t/));
+        }
+        
+        // --- ระบบสกัดคอลัมน์ลำดับที่ (หั่นทิ้งกลางอากาศ) ---
+        if (parsedRows.length >= 2 && parsedRows[0].length > 1) {
+            let startIdx = isNaN(parseFloat(parsedRows[0][0])) ? 1 : 0;
+            let validCount = 0;
+            let isSeq = true;
+            
+            for(let i=startIdx; i<parsedRows.length; i++) {
+                let valStr = parsedRows[i][0];
+                if (valStr === undefined || valStr.trim() === '') continue; 
+                let val = parseFloat(valStr.replace(/[^\d.-]/g, ''));
+                if (isNaN(val) || Math.abs(val - (validCount + 1)) > 0.001) {
+                    isSeq = false;
+                    break;
+                }
+                validCount++;
+            }
+            
+            let isIdHeader = false;
+            if (startIdx === 1 && parsedRows[0][0]) {
+               isIdHeader = /(ตัวชี้วัด|รายการ|ตัวที่|ซ้ำ|ลำดับ|id|no|ครั้งที่|rep|^ที่$)/i.test(parsedRows[0][0].replace(/\s+/g, ''));
+            }
+
+            if ((isSeq && validCount >= 2) || isIdHeader) {
+                // ถ้าตรวจพบความน่าจะเป็นว่าคอลัมน์แรกคือ "ลำดับ" ให้หั่นทิ้งจาก clipboard ไปเลย
+                parsedRows = parsedRows.map(r => r.slice(1));
+            }
+        }
+
+        const startCol = parseInt(target.getAttribute('data-col'));
+        const startRow = parseInt(target.getAttribute('data-row'));
+        
+        while (rowsCount < startRow + parsedRows.length) {
+            addRow();
+        }
+        
+        for (let r = 0; r < parsedRows.length; r++) {
+            let cells = parsedRows[r];
+            for (let c = 0; c < cells.length; c++) {
+                // ปลดล็อคตารางให้ขยายตัวได้อิสระเวลามีข้อมูลเกินมา
+                while(startCol + c >= colsCount) { 
+                    addColumn(); 
+                }
+                if (startCol + c < colsCount) {
+                    const cellInput = document.querySelector(`input[data-col="${startCol + c}"][data-row="${startRow + r}"]`);
+                    if (cellInput) {
+                        cellInput.value = cells[c].trim();
+                    }
+                }
+            }
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName !== 'INPUT' || !target.classList.contains('data-val')) return;
+        let c = parseInt(e.target.getAttribute('data-col')), r = parseInt(e.target.getAttribute('data-row')), nextInput = null;
+        if (e.key === 'ArrowDown') { e.preventDefault(); r++; } 
+        else if (e.key === 'ArrowUp') { e.preventDefault(); r--; } 
+        else if (e.key === 'ArrowRight') { e.preventDefault(); c++; } 
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); c--; }
+        else return;
+        nextInput = document.querySelector(`input[data-col="${c}"][data-row="${r}"]`);
+        if (nextInput) nextInput.focus();
+    });
+
+    // ดึงข้อมูลและข้ามเซลล์ว่าง
+    function getColData(c) {
+        const inputs = document.querySelectorAll(`.col-${c}`);
+        let vals = [];
+        for (let i = 0; i < inputs.length; i++) {
+            let valStr = inputs[i].value.trim();
+            if (valStr === '') continue; 
+            vals.push(valStr);
+        }
+        return vals;
+    }
+
+
+    // ==========================================
+    // 4. Router หลัก
+    // ==========================================
+    function analyzeData() {
+        document.getElementById('result-section').style.display = 'none';
+        document.getElementById('result-tables').innerHTML = '';
+        document.getElementById('result-explanation').innerHTML = '';
+
+        try {
+            if (currentTest === 'regression' || currentTest === 'regression_dummy') analyzeRegression();
+            else if (currentTest === 'correlation') analyzeCorrelation();
+            else if (currentTest === 'indep') analyzeIndep();
+            else if (currentTest === 'paired') analyzePaired();
+            else if (currentTest === 'onesample') analyzeOneSample();
+            else if (currentTest === 'crd') analyzeCRD();
+            else if (currentTest === 'rcbd') analyzeRCBD();
+            else if (currentTest === 'latin') analyzeLatinSquare();
+            else if (currentTest === 'factorial' || currentTest === 'factorial_rcbd') analyzeFactorial();
+            else if (currentTest === 'nested') analyzeNested();
+            else if (currentTest === 'chisq_nonpar') analyzeChiSqGoodness();
+            else if (currentTest === 'chisq_cross') analyzeChiSqCross();
+        } catch(e) {
+            alert("❌ ระบบตรวจพบข้อผิดพลาด:\n" + e.message + "\n\nคำแนะนำ: กรุณาตรวจสอบว่ามี 'ช่องว่าง' ปะปนอยู่ หรือมีข้อมูลที่ไม่ถูกต้องในช่องตารางครับ");
+            console.error(e);
+        }
+    }
+
+
+    // ==========================================
+    // 5. สถิติ Regression (Dummy + Stepwise Method)
+    // ==========================================
+    function analyzeRegression() {
+        let validColumns = [];
+        for (let c = 0; c < colsCount; c++) {
+            let inputs = document.querySelectorAll(`.col-${c}`);
+            let rawData = [];
+            inputs.forEach(inp => {
+                let v = inp.value.trim();
+                if (v !== '') rawData.push(v);
+            });
+            if (rawData.length >= 3) {
+                validColumns.push({ index: c, name: document.getElementById(`header-${c}`).value, dataRaw: rawData, data: rawData });
+            }
+        }
+
+        if (validColumns.length < 2) throw new Error("ต้องการข้อมูลอย่างน้อย 2 คอลัมน์ (ตัวแปรตาม Y และ ตัวแปรอิสระ X)");
+
+        // เรียกใช้ตัวกรองที่ป้องกันคอลัมน์ขยะ
+        validColumns = filterIDColumn(validColumns);
+
+        if (validColumns.length < 2) throw new Error("หลังจากหักคอลัมน์ลำดับที่ออกแล้ว ไม่พบข้อมูลตัวแปรอิสระ X ครับ");
+
+        let isDummyMode = (currentTest === 'regression_dummy');
+        
+        let yColObj = validColumns[0];
+        let xColsObj = validColumns.slice(1);
+        
+        let yName = yColObj.name;
+        let xNamesRaw = xColsObj.map(c => c.name);
+
+        let yCol = []; 
+        let xColsRaw = Array.from({length: xColsObj.length}, () => []);
+
+        let nRows = yColObj.dataRaw.length;
+        for(let r=0; r<nRows; r++) {
+            let yVal = parseFloat(yColObj.dataRaw[r].replace(/[^\d.-]/g, ''));
+            if(isNaN(yVal)) continue; 
+
+            let rowOk = true;
+            let tempX = [];
+            for(let c=0; c<xColsObj.length; c++) {
+                let xValStr = xColsObj[c].dataRaw[r];
+                if(xValStr === undefined || xValStr === '') { rowOk = false; break; }
+                let numVal = Number(xValStr);
+                if(!isNaN(numVal) && xValStr !== '') {
+                    tempX.push(numVal);
+                } else {
+                    tempX.push(xValStr); // Dummy text
+                }
+            }
+            if(rowOk) {
+                yCol.push(yVal);
+                tempX.forEach((v, i) => xColsRaw[i].push(v));
+            }
+        }
+        
+        let n = yCol.length;
+        if(n < 3) throw new Error("กรุณาใส่ข้อมูลให้ครบถ้วนในแถวเดียวกัน อย่างน้อย 3 แถวสำหรับการวิเคราะห์ Regression");
+
+        let xCols = [];
+        let xNames = [];
+        let hasDummy = false;
+        let dummyBreakdownData = [];
+
+        for(let i=0; i<xColsRaw.length; i++) {
+            let colData = xColsRaw[i];
+            let isCategorical = colData.some(v => typeof v === 'string');
+            
+            if (!isCategorical && isDummyMode) {
+                let uniqueNums = [...new Set(colData)].sort((a,b)=>a-b);
+                if (uniqueNums.length === 2 && (uniqueNums[0] !== 0 || uniqueNums[1] !== 1)) {
+                    isCategorical = true;
+                    colData = colData.map(v => String(v));
+                }
+            }
+            
+            if (isCategorical) {
+                hasDummy = true;
+                let strData = colData.map(v => String(v).trim());
+                let uniqueCats = [...new Set(strData)].sort(); 
+                
+                if(uniqueCats.length <= 1) { 
+                    xCols.push(colData.map(Number)); xNames.push(xNamesRaw[i]); continue; 
+                }
+                
+                let baseline = uniqueCats[0]; 
+                let lowerCats = uniqueCats.map(c => c.toLowerCase());
+                let negIdx = lowerCats.findIndex(c => c === 'ไม่ใช้' || c === 'ไม่' || c === 'ไม่มี' || c === 'no' || c === 'false' || c === '0');
+                if (negIdx !== -1) { baseline = uniqueCats[negIdx]; }
+
+                let dummyAddedForThisCol = [];
+                for(let k=0; k<uniqueCats.length; k++) {
+                    let cat = uniqueCats[k];
+                    if (cat === baseline) continue; 
+                    xCols.push(strData.map(v => v === cat ? 1 : 0));
+                    let dName = `${xNamesRaw[i]} (${cat})`;
+                    xNames.push(dName);
+                    dummyAddedForThisCol.push({ nameInModel: dName, catName: cat });
+                }
+                dummyBreakdownData.push({ originalName: xNamesRaw[i], baselineCat: baseline, dummies: dummyAddedForThisCol });
+
+            } else {
+                xCols.push(colData); xNames.push(xNamesRaw[i]);
+            }
+        }
+
+        let X_mat = []; for(let r=0; r<n; r++) X_mat.push(xCols.map(col => col[r]));
+        
+        // --- STEPWISE LOGIC ---
+        let models = [];
+        let included = [];
+        let available = Array.from(xNames.keys());
+
+        function fitSubset(inc) {
+            let subX = X_mat.map(row => inc.map(idx => row[idx]));
+            let subNames = inc.map(idx => xNames[idx]);
+            return fitMLR(yCol, subX, subNames);
+        }
+
+        while (true) {
+            let changed = false;
+            
+            // Backward
+            if (included.length > 0) {
+                let currentModel = fitSubset(included);
+                let maxP = -1; let removeIdx = -1; let removeColIdx = -1;
+                for (let j = 0; j < included.length; j++) {
+                    let pVal = currentModel.p_B[j + 1];
+                    if (pVal > 0.10 && pVal > maxP) { maxP = pVal; removeIdx = j; removeColIdx = included[j]; }
+                }
+                if (removeIdx !== -1) {
+                    included.splice(removeIdx, 1);
+                    available.push(removeColIdx);
+                    changed = true;
+                    if(included.length > 0) {
+                        let m = fitSubset(included);
+                        m.enteredVar = ''; m.removedVar = xNames[removeColIdx];
+                        models.push(m);
+                    }
+                    continue; 
+                }
+            }
+
+            // Forward
+            if (available.length > 0) {
+                let minP = 1.0; let bestIdx = -1;
+                for (let i = 0; i < available.length; i++) {
+                    let testIncluded = [...included, available[i]];
+                    let m = fitSubset(testIncluded);
+                    let pVal = m.p_B[testIncluded.length]; 
+                    if (pVal <= 0.05 && pVal < minP) { minP = pVal; bestIdx = i; } // Entry threshold 0.05
+                }
+                if (bestIdx !== -1) {
+                    let addColIdx = available.splice(bestIdx, 1)[0];
+                    included.push(addColIdx);
+                    changed = true;
+                    let m = fitSubset(included);
+                    m.enteredVar = xNames[addColIdx]; m.removedVar = '';
+                    models.push(m);
+                }
+            }
+            if (!changed) break;
+        }
+
+        let stepWiseNote = "";
+        if (models.length === 0) {
+            stepWiseNote = `<div style="background:#fff3e0; padding:10px; border-left:4px solid #ff9800; margin-bottom:15px; color:#e65100;"><strong>ข้อสังเกต (Stepwise):</strong> ไม่มีตัวแปรอิสระใดผ่านเกณฑ์เข้าสู่สมการได้ (Sig. < 0.05) ระบบจึงแสดงผลแบบ Enter (นำตัวแปรเข้าทั้งหมด) เพื่อให้ท่านพิจารณาค่าความสัมพันธ์ของแต่ละตัวแปรแทนครับ</div>`;
+            // Fallback to Enter
+            let m = fitMLR(yCol, X_mat, xNames); 
+            m.enteredVar = xNames.join(', '); m.removedVar = '';
+            models = [m];
+        }
+
+        let tableHTML = `<h4 style="text-align:left; color:#2e7d32; font-size:1.15rem; margin-bottom:5px;">Descriptive Statistics</h4>
+        <div class="table-responsive" style="margin-top:0;"><table><tr><th class="left-align">ตัวแปร</th><th>Mean</th><th>Std. Deviation</th><th>N</th></tr>`;
+        
+        let sY = getStats(yCol);
+        tableHTML += `<tr><td class="left-align">${yName}</td><td>${sY.mean.toFixed(4)}</td><td>${sY.sd.toFixed(4)}</td><td>${sY.n}</td></tr>`;
+        
+        for(let i=0; i<xColsRaw.length; i++) {
+            let isCat = xColsRaw[i].some(v => typeof v === 'string');
+            if (isCat) {
+                tableHTML += `<tr><td class="left-align">${xNamesRaw[i]}</td><td style="color:#757575;">- (Categorical)</td><td style="color:#757575;">-</td><td>${sY.n}</td></tr>`;
+            } else {
+                let sX = getStats(xColsRaw[i]);
+                tableHTML += `<tr><td class="left-align">${xNamesRaw[i]}</td><td>${sX.mean.toFixed(4)}</td><td>${sX.sd.toFixed(4)}</td><td>${sX.n}</td></tr>`;
+            }
+        }
+        tableHTML += `</table></div><br>`;
+        
+        tableHTML += stepWiseNote;
+
+        tableHTML += `<h4 style="text-align:left; color:#2e7d32; font-size:1.15rem; margin-bottom:5px;">Variables Entered/Removed</h4>
+        <div class="table-responsive" style="margin-top:0;"><table><tr><th>Model</th><th>Variables Entered</th><th>Variables Removed</th><th>Method</th></tr>`;
+        models.forEach((m, i) => { tableHTML += `<tr><td>${i+1}</td><td class="left-align">${m.enteredVar || '.'}</td><td class="left-align">${m.removedVar || '.'}</td><td class="left-align">Stepwise (Criteria: Probability-of-F-to-enter <= .050, Probability-of-F-to-remove >= .100).</td></tr>`; });
+        tableHTML += `</table></div><br>`;
+
+        tableHTML += `<h4 style="text-align:left; color:#2e7d32; font-size:1.15rem; margin-bottom:5px;">Model Summary</h4>
+        <div class="table-responsive" style="margin-top:0;"><table><tr><th>Model</th><th>R</th><th>R Square</th><th>Adjusted R Square</th><th>Std. Error of the Estimate</th></tr>`;
+        models.forEach((m, i) => { tableHTML += `<tr><td>${i+1}</td><td>${formatP(m.R)}</td><td>${formatP(m.R2)}</td><td>${formatP(m.adjR2)}</td><td>${m.stdErrorEst.toFixed(3)}</td></tr>`; });
+        tableHTML += `</table></div><br>`;
+
+        tableHTML += `<h4 style="text-align:left; color:#2e7d32; font-size:1.15rem; margin-bottom:5px;">ANOVA</h4>
+        <div class="table-responsive" style="margin-top:0;"><table><tr><th>Model</th><th>Sum of Squares</th><th>df</th><th>Mean Square</th><th>F</th><th>Sig.</th></tr>`;
+        models.forEach((m, i) => {
+            tableHTML += `<tr><td rowspan="3" style="vertical-align:middle;">${i+1}</td><td class="left-align">Regression</td><td>${m.SSReg.toFixed(3)}</td><td>${m.dfReg}</td><td>${m.MSReg.toFixed(3)}</td><td>${m.F.toFixed(3)}</td><td>${formatP(m.pF)}</td></tr>
+            <tr><td class="left-align">Residual</td><td>${m.SSRes.toFixed(3)}</td><td>${m.dfRes}</td><td>${m.MSRes.toFixed(3)}</td><td></td><td></td></tr>
+            <tr><td class="left-align">Total</td><td>${m.SST.toFixed(3)}</td><td>${m.dfReg+m.dfRes}</td><td></td><td></td><td></td></tr>`;
+        });
+        tableHTML += `</table></div><br>`;
+
+        tableHTML += `<h4 style="text-align:left; color:#2e7d32; font-size:1.15rem; margin-bottom:5px;">Coefficients</h4>
+        <div class="table-responsive" style="margin-top:0;"><table><tr><th rowspan="2">Model</th><th rowspan="2">Model (ตัวแปร)</th><th colspan="2">Unstandardized Coefficients</th><th>Standardized Coefficients</th><th rowspan="2">t</th><th rowspan="2">Sig.</th></tr><tr><th>B</th><th>Std. Error</th><th>Beta</th></tr>`;
+        models.forEach((m, i) => {
+            tableHTML += `<tr><td rowspan="${m.B.length}" style="vertical-align:middle;">${i+1}</td><td class="left-align">(Constant)</td><td>${m.B[0].toFixed(3)}</td><td>${m.SE_B[0].toFixed(3)}</td><td></td><td>${m.t_B[0].toFixed(3)}</td><td>${formatP(m.p_B[0])}</td></tr>`;
+            for(let j=1; j<m.B.length; j++) {
+                tableHTML += `<tr><td class="left-align">${m.xNames[j-1]}</td><td>${m.B[j].toFixed(3)}</td><td>${m.SE_B[j].toFixed(3)}</td><td>${formatP(m.beta[j])}</td><td>${m.t_B[j].toFixed(3)}</td><td>${formatP(m.p_B[j])}</td></tr>`;
+            }
+        });
+        tableHTML += `</table></div>`;
+
+        let lastM = models[models.length - 1];
+        let maxBetaName = "N/A"; let maxBetaVal = -1;
+        for(let i=1; i<lastM.beta.length; i++) {
+            if(Math.abs(lastM.beta[i]) > maxBetaVal) { maxBetaVal = Math.abs(lastM.beta[i]); maxBetaName = lastM.xNames[i-1]; }
+        }
+        
+        let yEqName = yName; 
+        let eqStr = `${yEqName} = ${lastM.B[0].toFixed(3)}`;
+        for(let i=1; i<lastM.B.length; i++) {
+            let sign = lastM.B[i] >= 0 ? "+" : "-";
+            eqStr += ` ${sign} ${Math.abs(lastM.B[i]).toFixed(3)}* ${lastM.xNames[i-1]}`;
+        }
+        
+        let pLev = lastM.pF < 0.01 ? "0.01" : "0.05";
+        let rPct = (lastM.R * 100).toFixed(1);
+        let r2Pct = (lastM.R2 * 100).toFixed(1);
+        let varList = lastM.xNames.join(' และ ');
+        let pText = formatP(lastM.pF); if(pText === ".000") pText = ".000";
+
+        let expText = `<div class="exp-box"><h4 class="exp-title">การแปลความหมายของข้อมูล</h4>`;
+        expText += `<p class="exp-text">1. จากตาราง Variables Entered/Removed และตาราง Model Summary พบว่าตัวแปรอิสระที่ถูกคัดเลือกเข้าสมการ (Stepwise) คือ <strong>${varList}</strong> มีความสัมพันธ์กับ <strong>${yName}</strong> โดยมีค่า r = ${formatP(lastM.R)} (มีความสัมพันธ์เท่ากับ ${rPct}%) และ r² = ${formatP(lastM.R2)} หมายถึง <strong>${varList}</strong> มีอิทธิพลต่อการเปลี่ยนแปลง <strong>${yName}</strong> = r² x 100 = ${r2Pct}%</p>`;
+        
+        let sigResultStr = lastM.pF < 0.05 ? `<span class="exp-highlight">มีความสัมพันธ์กัน</span> ที่ระดับนัยสำคัญ` : `<span class="exp-highlight">ไม่มีความสัมพันธ์กัน</span> อย่างมีนัยสำคัญ`;
+        expText += `<p class="exp-text">2. จากตาราง ANOVA พบว่าค่า F = ${lastM.F.toFixed(3)} และค่า Sig. = ${pText} ซึ่ง${lastM.pF < 0.01 ? 'น้อยกว่า 0.01' : (lastM.pF < 0.05 ? 'น้อยกว่า 0.05' : 'มากกว่า 0.05')} แสดงว่าตัวแปรตามและตัวแปรอิสระ${sigResultStr} ${lastM.pF < 0.05 ? pLev : ''}</p>`;
+        
+        expText += `<p class="exp-text">3. จากตาราง Coefficients พบว่าค่า <strong>${maxBetaName}</strong> มีค่า Beta สูงสุด และมีค่า Sig. น้อยกว่า 0.05 จึงสามารถนำไปใช้ในการทำนาย<strong>${yName}</strong>ได้ โดยใช้สมการรวม คือ</p>`;
+        expText += `<p style="text-align:center; font-weight:bold; color:#000; margin: 15px 0; background:#e8f5e9; padding:15px; border-radius:8px;">${eqStr} &nbsp;&nbsp;&nbsp; r² = ${formatP(lastM.R2)}</p>`;
+        expText += `<p style="font-size:0.9rem; color:#666; margin-bottom:15px;">หมายเหตุ: ค่า Beta ใดมีค่าสูงแสดงว่าปัจจัยนั้นมีอิทธิพลต่อการพยากรณ์มาก</p>`;
+
+        if (hasDummy && dummyBreakdownData.length > 0) {
+            expText += `<div style="background:#e0f2f1; border-radius:8px; padding:15px; margin: 20px 0;">
+                <h4 style="color:#d32f2f; margin-top:0; margin-bottom: 10px;">📌 การสรุปสมการแยกตามกรณีตัวแปรเชิงคุณภาพ (Dummy Variables)</h4>`;
+            
+            dummyBreakdownData.forEach(dummyGrp => {
+                expText += `<p style="color:#f57f17; font-weight:bold; margin-bottom: 5px;">👉 สำหรับปัจจัย "${dummyGrp.originalName}"</p>`;
+                expText += `<ul style="list-style-type: none; padding-left: 20px; margin-top: 5px; margin-bottom: 15px;" class="exp-text">`;
+                
+                let baseConst = lastM.B[0];
+                let eqBasePart = "";
+                for(let i=1; i<lastM.B.length; i++) {
+                    let isThisGroupDummy = dummyGrp.dummies.some(d => d.nameInModel === lastM.xNames[i-1]);
+                    if(!isThisGroupDummy) {
+                        let sign = lastM.B[i] >= 0 ? "+" : "-";
+                        eqBasePart += ` ${sign} ${Math.abs(lastM.B[i]).toFixed(3)}* ${lastM.xNames[i-1]}`;
+                    }
+                }
+                
+                expText += `<li style="margin-bottom: 10px;">🔸 <strong>กรณี "${dummyGrp.baselineCat}"</strong> (แทนค่าตัวแปร = 0):<br>
+                <span style="color:#d32f2f; font-weight:bold;">${yEqName} = ${baseConst.toFixed(3)}${eqBasePart}</span></li>`;
+                
+                dummyGrp.dummies.forEach(d => {
+                    let b_dummy = 0;
+                    for(let i=1; i<lastM.B.length; i++) {
+                        if (lastM.xNames[i-1] === d.nameInModel) { b_dummy = lastM.B[i]; break; }
+                    }
+                    let newConst = baseConst + b_dummy;
+                    let signDummy = b_dummy >= 0 ? "+" : "-";
+                    
+                    expText += `<li>🔸 <strong>กรณี "${d.catName}"</strong> (แทนค่าตัวแปร = 1):<br>
+                    <span style="color:#1976d2; font-weight:bold;">${yEqName} = ${newConst.toFixed(3)}${eqBasePart}</span><br>
+                    <span style="font-size:0.85rem; color:#757575;"><em>(สมการนี้ปรับปรุงค่าคงที่ (Constant) โดยนำ ${baseConst.toFixed(3)} ${signDummy} ${Math.abs(b_dummy).toFixed(3)})</em></span></li>`;
+                });
+                expText += `</ul>`;
+            });
+            expText += `</div>`;
+        }
+
+        let excludedStr = available.map(idx => xNamesRaw[idx]).join(', ');
+        if(excludedStr === "") excludedStr = "ไม่มี";
+        expText += `<p class="exp-text">4. Excluded Variables (ตัวแปรที่ถูกคัดออกเพราะ Sig. > 0.05): <strong>${excludedStr}</strong></p>`;
+        expText += `<h4 class="exp-title" style="margin-top:20px; font-size:1.1rem; border:none; padding:0;">การนำข้อมูลไปใช้ประโยชน์</h4>`;
+        expText += `<p class="exp-text">สามารถนำสมการข้างต้นไปใช้ในการทำนาย<strong>${yName}</strong>ต่อไปได้</p>`;
+        expText += `<p class="exp-text"><strong>การประเมินความน่าเชื่อถือ:</strong> สมการนี้มีความแม่นยำในการทำนายอยู่ที่ <strong>${r2Pct}%</strong> (พิจารณาจากค่า r²) ซึ่งจัดว่ามีความแม่นยำสูงมาก จึงเหมาะสมอย่างยิ่งที่จะนำไปใช้เป็นเกณฑ์ในการทำนายผลข้อมูลได้อย่างน่าเชื่อถือ</p></div>`;
+
+        document.getElementById('result-tables').innerHTML = tableHTML;
+        document.getElementById('result-explanation').innerHTML = expText;
+        document.getElementById('result-section').style.display = 'block';
+    }
+
+
+    // ==========================================
+    // 6. สถิติอื่นๆ ทั้งหมด 
+    // ==========================================
+    
+    function analyzeIndep() {
+        let validColumns = [];
+        for (let c = 0; c < colsCount; c++) {
+            let colDataRaw = getColData(c);
+            let colData = colDataRaw.map(v => parseFloat(String(v).replace(/[^\d.-]/g, ''))).filter(v => !isNaN(v));
+            if (colData.length > 0) validColumns.push({name: document.getElementById(`header-${c}`).value, data: colData});
+        }
+        validColumns = filterIDColumn(validColumns);
+        if (validColumns.length < 2) throw new Error("ต้องป้อนข้อมูลอย่างน้อย 2 คอลัมน์ (ไม่นับคอลัมน์ลำดับที่)");
+
+        const d1 = validColumns[0].data, d2 = validColumns[1].data;
+        const n1 = validColumns[0].name, n2 = validColumns[1].name;
+        const s1 = getStats(d1), s2 = getStats(d2);
+        const df = s1.n + s2.n - 2;
+        const pooledVar = ((s1.n - 1) * s1.variance + (s2.n - 1) * s2.variance) / df;
+        const tStat = (s1.mean - s2.mean) / Math.sqrt(pooledVar * (1/s1.n + 1/s2.n));
+        let pValue = 1.0;
+        try { pValue = (1 - jStat.studentt.cdf(Math.abs(tStat), df)) * 2; } catch(e){}
+        
+        let tableHTML = `<h4 style="text-align:left; color:#2e7d32; font-size:1.15rem; margin-bottom:5px;">Independent Samples T-Test</h4>
+        <div class="table-responsive" style="margin-top:0;"><table><tr><th class="left-align">กลุ่ม</th><th>N</th><th>Mean</th><th>Std. Deviation</th><th>t</th><th>df</th><th>Sig. (2-tailed)</th></tr>
+        <tr><td class="left-align">${n1}</td><td>${s1.n}</td><td>${s1.mean.toFixed(4)}</td><td>${s1.sd.toFixed(4)}</td><td rowspan="2" style="vertical-align:middle;">${tStat.toFixed(3)}</td><td rowspan="2" style="vertical-align:middle;">${df}</td><td rowspan="2" style="vertical-align:middle;">${formatP(pValue)}</td></tr>
+        <tr><td class="left-align">${n2}</td><td>${s2.n}</td><td>${s2.mean.toFixed(4)}</td><td>${s2.sd.toFixed(4)}</td></tr></table></div>`;
+        
+        let depVar = document.getElementById('depVarName').value || 'ค่าเฉลี่ย';
+        
+        let expText = `<div class="exp-box"><h4 class="exp-title">อธิบายผลและสรุปทางสถิติ:</h4>
+        <p class="exp-text">จากการเปรียบเทียบค่าเฉลี่ยของ <strong>${depVar}</strong> ระหว่างกลุ่ม <strong>${n1}</strong> (Mean = ${s1.mean.toFixed(2)}) และกลุ่ม <strong>${n2}</strong> (Mean = ${s2.mean.toFixed(2)}) พบว่า `;
+        
+        if (pValue < 0.05) {
+            let better = s1.mean > s2.mean ? n1 : n2;
+            let betterMean = Math.max(s1.mean, s2.mean);
+            expText += `<span class="exp-highlight">มีความแตกต่างกัน</span> อย่างมีนัยสำคัญทางสถิติ (P < 0.05)</p>
+            <div class="exp-note">💡 <strong>การแปลผลและสรุปเชื่อมโยงกับเนื้อหา:</strong> เมื่อพิจารณาจากข้อมูล พบว่ากลุ่ม <strong>${better}</strong> ส่งผลให้ <strong>${depVar}</strong> มีค่าสูงกว่าอย่างชัดเจน (เฉลี่ย ${betterMean.toFixed(4)}) แสดงให้เห็นว่าในการปฏิบัติงานหรือการนำไปใช้จริง การเลือก <strong>${better}</strong> จะช่วยเพิ่มประสิทธิภาพของ <strong>${depVar}</strong> ได้ดีที่สุดครับ</div>`;
+        } else {
+            expText += `<span class="exp-highlight">ไม่มีความแตกต่างกัน</span> ทางสถิติ (P > 0.05)</p>
+            <div class="exp-note">💡 <strong>การแปลผลและสรุปเชื่อมโยงกับเนื้อหา:</strong> แสดงให้เห็นว่าทั้งสองกลุ่มให้ผลลัพธ์ของ <strong>${depVar}</strong> ไม่ต่างกัน ดังนั้นในการนำไปปฏิบัติจริง สามารถเลือกใช้วิธีใดก็ได้ที่สะดวกหรือประหยัดต้นทุนที่สุดครับ</div>`;
+        }
+        expText += `</div>`;
+
+        document.getElementById('result-tables').innerHTML = tableHTML;
+        document.getElementById('result-explanation').innerHTML = expText;
+        document.getElementById('result-section').style.display = 'block';
+    }
+
+    function analyzePaired() {
+        let validColumns = [];
+        for (let c = 0; c < colsCount; c++) {
+            let colDataRaw = getColData(c);
+            let colData = colDataRaw.map(v => parseFloat(String(v).replace(/[^\d.-]/g, ''))).filter(v => !isNaN(v));
+            if (colData.length > 0) validColumns.push({name: document.getElementById(`header-${c}`).value, data: colData});
+        }
+        validColumns = filterIDColumn(validColumns);
+        if (validColumns.length < 2) throw new Error("ต้องป้อนข้อมูลอย่างน้อย 2 คอลัมน์ (ไม่นับคอลัมน์ลำดับที่)");
+
+        const d1 = validColumns[0].data, d2 = validColumns[1].data;
+        if (d1.length !== d2.length) throw new Error("ข้อมูลก่อนและหลังต้องมีจำนวนคู่เท่ากัน");
+
+        const n1 = validColumns[0].name, n2 = validColumns[1].name;
+        const s1 = getStats(d1), s2 = getStats(d2);
+        let diffs = []; for(let i=0; i<d1.length; i++) diffs.push(d1[i] - d2[i]);
+        const sd = getStats(diffs);
+        const df = sd.n - 1;
+        const tStat = sd.mean / (sd.sd / Math.sqrt(sd.n));
+        let pValue = 1.0;
+        try { pValue = (1 - jStat.studentt.cdf(Math.abs(tStat), df)) * 2; } catch(e){}
+        
+        let tableHTML = `<h4 style="text-align:center; color:#2e7d32; font-size:1.15rem;">ตารางสถิติเชิงพรรณนา (Descriptive Statistics): ข้อมูลแต่ละระยะ/กลุ่ม (Paired Samples Statistics)</h4>
+        <div class="table-responsive"><table><tr><th class="left-align">รายการ/ระดับ</th><th>N</th><th>Mean</th><th>Std. Deviation</th><th>Std. Error</th></tr>
+        <tr><td class="left-align">${n1}</td><td>${s1.n}</td><td>${s1.mean.toFixed(4)}</td><td>${s1.sd.toFixed(4)}</td><td>${s1.se.toFixed(4)}</td></tr>
+        <tr><td class="left-align">${n2}</td><td>${s2.n}</td><td>${s2.mean.toFixed(4)}</td><td>${s2.sd.toFixed(4)}</td><td>${s2.se.toFixed(4)}</td></tr></table></div>
+        
+        <h4 style="text-align:center; color:#2e7d32; font-size:1.15rem;">Paired Samples T-Test</h4><div class="table-responsive"><table><tr><th>N</th><th>Mean Difference</th><th>Std. Deviation Difference</th><th>t</th><th>df</th><th>Sig. (2-tailed)</th></tr>
+        <tr><td>${sd.n}</td><td>${Math.abs(sd.mean).toFixed(4)}</td><td>${sd.sd.toFixed(4)}</td><td>${tStat.toFixed(3)}</td><td>${df}</td><td>${formatP(pValue)}</td></tr></table></div>`;
+        
+        let depVar = document.getElementById('depVarName').value || 'ข้อมูล';
+        
+        let expText = `<div class="exp-box"><h4 class="exp-title">อธิบายผลและสรุปทางสถิติ:</h4>
+        <p class="exp-text">จากการเปรียบเทียบความแตกต่างของ <strong>${depVar}</strong> พบว่า `;
+        
+        if (pValue < 0.05) {
+            expText += `<span class="exp-highlight">มีความแตกต่างกัน</span> อย่างมีนัยสำคัญทางสถิติ (P < 0.05)</p>
+            <div class="exp-note">💡 <strong>การแปลผลและสรุปเชื่อมโยงกับเนื้อหา:</strong> แสดงให้เห็นว่ากระบวนการ ทรีตเมนต์ หรือระยะเวลาที่ผ่านไป (เปรียบเทียบระหว่าง ${n1} กับ ${n2}) ส่งผลทำให้ <strong>${depVar}</strong> เกิดการเปลี่ยนแปลงไปจากเดิมอย่างชัดเจน จึงควรให้ความสำคัญหรือนำกระบวนการนี้ไปใช้เพื่อให้เกิดผลลัพธ์ที่ควบคุมได้ตามต้องการครับ</div>`;
+        } else {
+            expText += `<span class="exp-highlight">ไม่มีความแตกต่างกัน</span> ทางสถิติ (P > 0.05)</p>
+            <div class="exp-note">💡 <strong>การแปลผลและสรุปเชื่อมโยงกับเนื้อหา:</strong> แสดงให้เห็นว่ากระบวนการที่ทำไป ไม่มีผลทำให้ <strong>${depVar}</strong> เปลี่ยนแปลงไปจากเดิมครับ</div>`;
+        }
+        expText += `</div>`;
+
+        document.getElementById('result-tables').innerHTML = tableHTML;
+        document.getElementById('result-explanation').innerHTML = expText;
+        document.getElementById('result-section').style.display = 'block';
+    }
+
+    function analyzeOneSample() {
+        let validColumns = [];
+        for (let c = 0; c < colsCount; c++) {
+            let colDataRaw = getColData(c);
+            let colData = colDataRaw.map(v => parseFloat(String(v).replace(/[^\d.-]/g, ''))).filter(v => !isNaN(v));
+            if (colData.length >= 2) validColumns.push({ index: c, name: document.getElementById(`header-${c}`).value, data: colData });
+        }
+        validColumns = filterIDColumn(validColumns);
+        if (validColumns.length === 0) throw new Error("กรุณากรอกข้อมูลตัวเลขอย่างน้อย 2 แถว");
+
+        const targetCol = validColumns[validColumns.length - 1]; 
+        const d1 = targetCol.data; const n1 = targetCol.name;
+        const testVal = parseFloat(document.getElementById('testValue').value);
+        if (isNaN(testVal)) throw new Error("กรุณาระบุค่าเกณฑ์มาตรฐาน (Test Value)");
+
+        const s1 = getStats(d1); const df = s1.n - 1;
+        const tStat = (s1.mean - testVal) / (s1.sd / Math.sqrt(s1.n));
+        let pValue = 1.0; try { pValue = (1 - jStat.studentt.cdf(Math.abs(tStat), df)) * 2; } catch(e){}
+
+        let tableHTML = `<h4 style="text-align:left; color:#2e7d32; font-size:1.15rem; margin-bottom:5px;">One Sample T-Test</h4>
+        <div class="table-responsive" style="margin-top:0;"><table><tr><th>Test Value</th><th>N</th><th>Mean</th><th>Std. Deviation</th><th>t</th><th>df</th><th>Sig. (2-tailed)</th></tr>
+        <tr><td>${testVal}</td><td>${s1.n}</td><td>${s1.mean.toFixed(4)}</td><td>${s1.sd.toFixed(4)}</td><td>${tStat.toFixed(3)}</td><td>${df}</td><td>${formatP(pValue)}</td></tr></table></div>`;
+        
+        let unit = document.getElementById('depVarUnit').value || '';
+        let expText = `<div class="exp-box"><h4 class="exp-title">อธิบายผลและสรุปทางสถิติ:</h4>
+        <p class="exp-text">จากการเปรียบเทียบค่า <strong>${n1}</strong> พบว่า <span class="exp-highlight">${pValue < 0.05 ? 'มีความแตกต่าง' : 'ไม่มีความแตกต่าง'}</span> จากเกณฑ์มาตรฐานที่ตั้งไว้ (${testVal}) ทางสถิติ (P ${pValue < 0.05 ? '<' : '>'} 0.05)</p>`;
+
+        if (pValue < 0.05) {
+            let dir = s1.mean > testVal ? "สูงกว่า" : "ต่ำกว่า";
+            expText += `<div class="exp-note">💡 <strong>ฟันธงและข้อเสนอแนะ:</strong> แสดงให้เห็นว่ากลุ่ม <strong>${n1}</strong> (${unit}) (มีค่าเฉลี่ย ${s1.mean.toFixed(4)}) ให้ค่า <strong>${n1}</strong> <span style="color:#d32f2f; font-weight:bold;">"${dir}เกณฑ์มาตรฐานที่วางไว้"</span> อย่างชัดเจน จึงต้องนำผลลัพธ์นี้ไปประเมินปรับปรุงแผนการดำเนินงานต่อไปครับ</div>`;
+        } else {
+            expText += `<div class="exp-note">💡 <strong>ฟันธงและข้อเสนอแนะ:</strong> แสดงให้เห็นว่ากลุ่ม <strong>${n1}</strong> (${unit}) (มีค่าเฉลี่ย ${s1.mean.toFixed(4)}) ให้ค่า <strong>${n1}</strong> <span style="color:#1b5e20; font-weight:bold;">"ผ่านเกณฑ์มาตรฐานที่วางไว้"</span> ได้อย่างพอดี และมีความสม่ำเสมอเป็นไปตามเป้าหมายที่ประเมินไว้ครับ</div>`;
+        }
+        expText += `</div>`;
+
+        document.getElementById('result-tables').innerHTML = tableHTML;
+        document.getElementById('result-explanation').innerHTML = expText;
+        document.getElementById('result-section').style.display = 'block';
+    }
+
+    function analyzeCorrelation() {
+        let validColumns = [];
+        for(let c=0; c<colsCount; c++) {
+            let colDataRaw = getColData(c);
+            let colData = colDataRaw.map(v => parseFloat(String(v).replace(/[^\d.-]/g, ''))).filter(v => !isNaN(v));
+            if(colData.length > 0) validColumns.push({name: document.getElementById(`header-${c}`).value, data: colData});
+        }
+        validColumns = filterIDColumn(validColumns);
+        if(validColumns.length < 2) throw new Error("กรุณาใส่ข้อมูลให้ครบถ้วนอย่างน้อย 2 ตัวแปร (ไม่นับคอลัมน์ลำดับที่)");
+        
+        let allData = validColumns.map(c => c.data);
+        let names = validColumns.map(c => c.name);
+        let nLen = allData[0].length;
+        
+        function getPVal(r, n) {
+            if (n <= 2) return 1; if (Math.abs(r) === 1) return 0;
+            let t = r * Math.sqrt((n - 2) / (1 - r * r)); let p = 1.0;
+            try { p = (1 - jStat.studentt.cdf(Math.abs(t), n - 2)) * 2; } catch(e) {}
+            return p;
+        }
+
+        let tableHTML = `<h4 style="text-align:left; color:#2e7d32; font-size:1.15rem; margin-bottom:5px;">Descriptive Statistics</h4>
+        <div class="table-responsive" style="margin-top:0;"><table><tr><th class="left-align">ตัวแปร</th><th>Mean</th><th>Std. Deviation</th><th>N</th></tr>`;
+        for(let c=0; c<allData.length; c++) {
+            let s = getStats(allData[c]);
+            tableHTML += `<tr><td class="left-align">${names[c]}</td><td>${s.mean.toFixed(4)}</td><td>${s.sd.toFixed(4)}</td><td>${s.n}</td></tr>`;
+        }
+        tableHTML += `</table></div><br>`;
+
+        tableHTML += `<h4 style="text-align: left; color: #2e7d32; font-size: 1.15rem; margin-bottom: 5px;">Pearson Correlation Matrix</h4>
+        <div class="table-responsive" style="margin-top:0;"><table>
+        <tr><th>ตัวแปร</th>`;
+        for (let c = 0; c < allData.length; c++) tableHTML += `<th>${names[c]}</th>`;
+        tableHTML += `</tr>`;
+        
+        for (let i = 0; i < allData.length; i++) {
+            tableHTML += `<tr><td class="left-align" style="vertical-align: top; width: 25%;"><strong>${names[i]}</strong><br><span style="font-size:0.85rem; color:#666;">Sig. (2-tailed)</span></td>`;
+            for (let j = 0; j < allData.length; j++) {
+                if (i === j) { tableHTML += `<td>1<br><span style="color:#666;">-</span></td>`; } 
+                else { 
+                    let r = jStat.corrcoeff(allData[i], allData[j]); let p = getPVal(r, nLen); 
+                    let ast = p < 0.01 ? "**" : (p < 0.05 ? "*" : ""); 
+                    let pText = formatP(p); if(pText===".000") pText=".000";
+                    tableHTML += `<td>${r.toFixed(3)}${ast}<br><span style="color:#666;">${pText}</span></td>`; 
+                }
+            }
+            tableHTML += `</tr>`;
+        }
+        tableHTML += `</table></div><div style="font-size: 0.85rem; text-align: left; margin-top: 5px; color:#555;">*. Correlation is significant at the 0.05 level (2-tailed).<br>**. Correlation is significant at the 0.01 level (2-tailed).</div>`;
+        
+        let expText = `<div class="exp-box"><h4 class="exp-title">สรุปผลการวิเคราะห์สหสัมพันธ์ (เปรียบเทียบกับ ${names[0]}):</h4><ul style="list-style-type: disc; padding-left: 20px; line-height: 1.8;" class="exp-text">`;
+        
+        for (let i = 1; i < allData.length; i++) {
+            let r = jStat.corrcoeff(allData[0], allData[i]); let p = getPVal(r, nLen);
+            let absR = Math.abs(r); let levelStr = "ระดับต่ำ";
+            if (absR >= 0.7) levelStr = "ระดับสูง"; else if (absR >= 0.4) levelStr = "ระดับปานกลาง";
+
+            if (p < 0.05) {
+                let dir = r > 0 ? "เชิงบวก (แปรผันตามกัน)" : "เชิงลบ (แปรผกผันกัน)";
+                expText += `<li>ตัวแปร <strong>${names[i]}</strong> มีความสัมพันธ์<span class="exp-highlight">${dir}</span>ใน${levelStr} กับ <strong>${names[0]}</strong> อย่างมีนัยสำคัญ (r = ${r.toFixed(3)}, P < 0.05)</li>`;
+            } else {
+                expText += `<li>ตัวแปร <strong>${names[i]}</strong> <span style="color:#757575;">ไม่มีความสัมพันธ์</span> กับ <strong>${names[0]}</strong> (P > 0.05)</li>`;
+            }
+        }
+        expText += `</ul></div>`;
+
+        document.getElementById('result-tables').innerHTML = tableHTML;
+        document.getElementById('result-explanation').innerHTML = expText;
+        document.getElementById('result-section').style.display = 'block';
+    }
+
+    function analyzeCRD() {
+        let validCols = [];
+        for (let c = 0; c < colsCount; c++) {
+            let colDataRaw = getColData(c);
+            let colData = colDataRaw.map(v => parseFloat(String(v).replace(/[^\d.-]/g, ''))).filter(v => !isNaN(v));
+            if(colData.length > 0) validCols.push({name: document.getElementById(`header-${c}`).value, data: colData});
+        }
+        validCols = filterIDColumn(validCols);
+        if (validCols.length < 2) throw new Error("ต้องมีกลุ่มทดลองอย่างน้อย 2 กลุ่มที่มีข้อมูลครับ");
+
+        let allData = []; let stats = []; let names = []; let totalN = 0; let grandSum = 0;
+        for (let c = 0; c < validCols.length; c++) {
+            let colData = validCols[c].data; 
+            if (colData.length < 2) throw new Error(`ชุดการทดลอง '${validCols[c].name}' ต้องมีข้อมูลอย่างน้อย 2 ค่า`);
+            allData.push(colData); let s = getStats(colData); s.name = validCols[c].name; stats.push(s);
+            names.push(s.name); totalN += s.n; grandSum += s.sum;
+        }
+
+        let lev = calculateLevene(allData); const grandMean = grandSum / totalN; let SSTr = 0, SST = 0;
+        for (let c = 0; c < allData.length; c++) { SSTr += stats[c].n * Math.pow(stats[c].mean - grandMean, 2); for (let r = 0; r < allData[c].length; r++) SST += Math.pow(allData[c][r] - grandMean, 2); }
+        let SSE = SST - SSTr; const dfTr = allData.length - 1, dfE = totalN - allData.length, dfT = totalN - 1;
+        const MSTr = SSTr / dfTr, MSE = Math.max(0.0001, SSE / dfE), FTr = MSTr / MSE; 
+        let pValueTr = 1.0; try{ pValueTr = 1 - jStat.centralF.cdf(FTr, dfTr, dfE); }catch(e){}
+        
+        let depVar = document.getElementById('depVarName').value || 'ผลผลิต';
+        
+        let tableHTML = `<h4 style="text-align:left; color:#2e7d32; font-size:1.15rem; margin-bottom:5px;">Levene's Test of Equality of Error Variances</h4>
+        <div class="table-responsive" style="margin-top:0;"><table><tr><th class="left-align">${depVar}</th><th>Levene Statistic</th><th>df1</th><th>df2</th><th>Sig.</th></tr><tr><td class="left-align">Based on Mean</td><td>${lev.F.toFixed(3)}</td><td>${lev.df1}</td><td>${lev.df2}</td><td>${formatP(lev.p)}</td></tr></table></div>`;
+        
+        tableHTML += `<h4 style="text-align:left; color:#2e7d32; font-size:1.15rem; margin-bottom:5px;">Tests of Between-Subjects Effects (CRD)</h4>
+        <div class="table-responsive" style="margin-top:0;"><table><tr><th class="left-align">Source</th><th>Type III Sum of Squares</th><th>df</th><th>Mean Square</th><th>F</th><th>Sig.</th></tr><tr><td class="left-align">Treatments (ชุดการทดลอง)</td><td>${SSTr.toFixed(3)}</td><td>${dfTr}</td><td>${MSTr.toFixed(3)}</td><td>${FTr.toFixed(3)}</td><td>${formatP(pValueTr)}</td></tr><tr><td class="left-align">Error</td><td>${SSE.toFixed(3)}</td><td>${dfE}</td><td>${MSE.toFixed(3)}</td><td></td><td></td></tr><tr><td class="left-align">Total</td><td>${SST.toFixed(3)}</td><td>${dfT}</td><td></td><td></td><td></td></tr></table></div>`;
+        
+        let descHTML = generateDescriptiveTable('ชุดการทดลอง', stats);
+        tableHTML += descHTML;
+
+        let expText = `<div class="exp-box"><h4 class="exp-title">อธิบายผลและสรุปข้อมูล (CRD):</h4>`;
+        
+        if (pValueTr < 0.05) { 
+            let dmrt = generateDMRT_HTML('ชุดการทดลอง', stats, MSE, dfE);
+            tableHTML += dmrt.html; 
+            expText += dmrt.exp.replace('<div class="exp-box">', '').replace('</div>', ''); 
+        } else {
+            expText += `<p class="exp-text">จากการทดสอบอิทธิพลของ <strong>ชุดการทดลอง</strong> ที่มีต่อ <strong>${depVar}</strong> พบว่า <span class="exp-highlight">ไม่มีความแตกต่างกัน</span> อย่างมีนัยสำคัญทางสถิติ (P > 0.05)</p>
+            <p class="exp-text" style="color:#d32f2f; font-weight:bold;">📌 ข้อสรุปเชื่อมโยงกับเนื้อหา:</p>
+            <ul style="list-style-type: none; padding-left: 15px;" class="exp-text">
+                <li>แสดงให้เห็นว่าทุกระดับสามารถกระตุ้นหรือส่งผลให้ <strong>${depVar}</strong> ได้ดีเทียบเท่ากันทั้งหมด</li>
+            </ul>
+            <div class="exp-note">💡 <strong>ฟันธง:</strong> ในการนำไปปฏิบัติจริง ท่านสามารถพิจารณาเลือกใช้กลุ่มหรือระดับใดก็ได้ โดยอิงจากความสะดวก หรือเลือกวิธีที่ประหยัดต้นทุนที่สุดได้เลยครับ</div>`;
+        }
+        expText += `</div>`;
+        
+        document.getElementById('result-tables').innerHTML = tableHTML; 
+        document.getElementById('result-explanation').innerHTML = expText; 
+        document.getElementById('result-section').style.display = 'block';
+    }
+
+    function analyzeRCBD() {
+        let validCols = [];
+        for (let c = 0; c < colsCount; c++) {
+            let colDataRaw = getColData(c);
+            let colData = colDataRaw.map(v => parseFloat(String(v).replace(/[^\d.-]/g, ''))).filter(v => !isNaN(v));
+            if(colData.length > 0) validCols.push({name: document.getElementById(`header-${c}`).value, data: colData});
+        }
+        validCols = filterIDColumn(validCols);
+        if (validCols.length < 2) throw new Error("ต้องมีกลุ่มทดลองอย่างน้อย 2 กลุ่มที่มีข้อมูลครับ");
+
+        let allData = []; let stats = []; let names = []; let totalN = 0; let grandSum = 0; 
+        
+        let maxLen = Math.max(...validCols.map(c=>c.data.length)); 
+        let minLen = Math.min(...validCols.map(c=>c.data.length));
+        if(minLen !== maxLen) throw new Error("แผนการทดลองแบบ Block ต้องมีข้อมูลซ้ำเท่ากันทุกกลุ่มครับ");
+
+        let blockSums = new Array(maxLen).fill(0); let blockN = new Array(maxLen).fill(0); let dataBlk = Array.from({length: maxLen}, () => []);
+
+        for (let c = 0; c < validCols.length; c++) {
+            let colData = validCols[c].data; 
+            if (colData.length < 2) throw new Error(`ชุดทดลอง '${validCols[c].name}' ข้อมูลไม่ครบ`);
+            allData.push(colData); let s = getStats(colData); s.name = validCols[c].name; stats.push(s);
+            names.push(s.name); totalN += s.n; grandSum += s.sum;
+            for(let r=0; r<colData.length; r++) { blockSums[r]+=colData[r]; blockN[r]++; dataBlk[r].push(colData[r]); }
+        }
+
+        let lev = calculateLevene(allData); let statsBlk = dataBlk.map((arr, idx) => { let s = getStats(arr); s.name = `บล็อกที่ ${idx+1}`; return s; }).filter(s => s.n > 0);
+        const grandMean = grandSum / totalN; let SSTr = 0, SST = 0, SSBlk = 0;
+        for (let c = 0; c < allData.length; c++) { SSTr += stats[c].n * Math.pow(stats[c].mean - grandMean, 2); for (let r = 0; r < allData[c].length; r++) SST += Math.pow(allData[c][r] - grandMean, 2); }
+        for(let r=0; r<maxLen; r++) { SSBlk += allData.length * Math.pow((blockSums[r]/allData.length) - grandMean, 2); }
+        let SSE = SST - SSTr - SSBlk; const dfTr = allData.length - 1, dfBlk = maxLen - 1, dfE = dfTr * dfBlk, dfT = totalN - 1;
+        const MSTr = SSTr / dfTr; const MSBlk = SSBlk / dfBlk; const MSE = Math.max(0.0001, SSE / dfE);
+        const FTr = MSTr / MSE; const FBlk = MSBlk / MSE; 
+        let pValueTr = 1.0; try{ pValueTr = 1 - jStat.centralF.cdf(FTr, dfTr, dfE); }catch(e){}
+        let pValueBlk = 1.0; try{ pValueBlk = 1 - jStat.centralF.cdf(FBlk, dfBlk, dfE); }catch(e){}
+
+        let depVar = document.getElementById('depVarName').value || 'ผลผลิต'; let testTitle = currentTest === 'latin' ? 'Latin Square' : 'RCBD';
+        
+        let tableHTML = `<h4 style="text-align:left; color:#2e7d32; font-size:1.15rem; margin-bottom:5px;">Levene's Test of Equality of Error Variances</h4>
+        <div class="table-responsive" style="margin-top:0;"><table><tr><th class="left-align">${depVar}</th><th>Levene Statistic</th><th>df1</th><th>df2</th><th>Sig.</th></tr><tr><td class="left-align">Based on Mean</td><td>${lev.F.toFixed(3)}</td><td>${lev.df1}</td><td>${lev.df2}</td><td>${formatP(lev.p)}</td></tr></table></div>`;
+        
+        tableHTML += `<h4 style="text-align:left; color:#2e7d32; font-size:1.15rem; margin-bottom:5px;">Tests of Between-Subjects Effects (${testTitle})</h4>
+        <div class="table-responsive" style="margin-top:0;"><table><tr><th class="left-align">Source</th><th>Type III Sum of Squares</th><th>df</th><th>Mean Square</th><th>F</th><th>Sig.</th></tr>
+        <tr><td class="left-align">Treatments (ชุดการทดลอง)</td><td>${SSTr.toFixed(3)}</td><td>${dfTr}</td><td>${MSTr.toFixed(3)}</td><td>${FTr.toFixed(3)}</td><td>${formatP(pValueTr)}</td></tr>
+        <tr><td class="left-align">Blocks (บล็อก/พื้นที่)</td><td>${SSBlk.toFixed(3)}</td><td>${dfBlk}</td><td>${MSBlk.toFixed(3)}</td><td>${FBlk.toFixed(3)}</td><td>${formatP(pValueBlk)}</td></tr>
+        <tr><td class="left-align">Error</td><td>${SSE.toFixed(3)}</td><td>${dfE}</td><td>${MSE.toFixed(3)}</td><td></td><td></td></tr>
+        <tr><td class="left-align">Total</td><td>${SST.toFixed(3)}</td><td>${dfT}</td><td></td><td></td><td></td></tr></table></div>`;
+        
+        let descHTML = generateDescriptiveTable('ชุดการทดลอง', stats);
+        tableHTML += descHTML;
+
+        let expText = `<div class="exp-box">
+            <h4 class="exp-title">อธิบายผลและสรุปข้อมูล (${testTitle}):</h4>`;
+        
+        if (pValueTr < 0.05) { 
+            let dmrt = generateDMRT_HTML('ชุดการทดลอง', stats, MSE, dfE);
+            tableHTML += dmrt.html; 
+            expText += dmrt.exp.replace('<div class="exp-box">', '').replace('</div>', ''); 
+        } else {
+            expText += `<p class="exp-text">จากการทดสอบอิทธิพลของ <strong>ชุดการทดลอง</strong> ที่มีต่อ <strong>${depVar}</strong> พบว่า <span class="exp-highlight">ไม่มีความแตกต่างกัน</span> อย่างมีนัยสำคัญทางสถิติ (P > 0.05)</p>
+            <p class="exp-text" style="color:#d32f2f; font-weight:bold;">📌 ข้อสรุปเชื่อมโยงกับเนื้อหา:</p>
+            <ul style="list-style-type: none; padding-left: 15px;" class="exp-text">
+                <li>แสดงให้เห็นว่าทุกระดับสามารถกระตุ้นหรือส่งผลให้ <strong>${depVar}</strong> ได้ดีเทียบเท่ากันทั้งหมด</li>
+            </ul>
+            <div class="exp-note">💡 <strong>ฟันธง:</strong> ในการนำไปปฏิบัติจริง ท่านสามารถพิจารณาเลือกใช้กลุ่มหรือระดับใดก็ได้ โดยอิงจากความสะดวก หรือเลือกวิธีที่ประหยัดต้นทุนที่สุดได้เลยครับ</div>`;
+        }
+        expText += `</div>`;
+
+        document.getElementById('result-tables').innerHTML = tableHTML; 
+        document.getElementById('result-explanation').innerHTML = expText; 
+        document.getElementById('result-section').style.display = 'block';
+    }
+
+    function analyzeLatinSquare() { analyzeRCBD(); }
+
+    function analyzeFactorial() {
+        let validCols = [];
+        for (let c = 0; c < colsCount; c++) {
+            let colDataRaw = getColData(c);
+            let colData = colDataRaw.map(v => parseFloat(String(v).replace(/[^\d.-]/g, ''))).filter(v => !isNaN(v));
+            if (colData.length > 0) { validCols.push({name: document.getElementById(`header-${c}`).value, data: colData}); }
+        }
+
+        let a = parseInt(document.getElementById('fac1Levels').value); let b = parseInt(document.getElementById('fac2Levels').value);
+        let expectedCols = a * b;
+        
+        validCols = filterIDColumn(validCols);
+        
+        let nameA = document.getElementById('fac1Name').value; let nameB = document.getElementById('fac2Name').value;
+        let depVar = document.getElementById('depVarName').value || 'ผลผลิต';
+        
+        if (validCols.length !== expectedCols) {
+            // ระบบ AI ช่วยปรับตัวเลขจำนวนระดับปัจจัยให้อัตโนมัติ
+            if(validCols.length === 4) { a=2; b=2; document.getElementById('fac1Levels').value=2; document.getElementById('fac2Levels').value=2; expectedCols=4; }
+            else if(validCols.length === 6) { a=2; b=3; document.getElementById('fac1Levels').value=2; document.getElementById('fac2Levels').value=3; expectedCols=6; }
+            else if(validCols.length === 8) { a=2; b=4; document.getElementById('fac1Levels').value=2; document.getElementById('fac2Levels').value=4; expectedCols=8; }
+            else if(validCols.length === 9) { a=3; b=3; document.getElementById('fac1Levels').value=3; document.getElementById('fac2Levels').value=3; expectedCols=9; }
+            else {
+                throw new Error(`ท่านป้อนข้อมูลมา ${validCols.length} กลุ่ม แต่แผนการทดลองต้องการ ${expectedCols} กลุ่ม (${a}x${b})\n\nคำแนะนำ:\n1. ตรวจสอบว่าท่านตั้งค่าระดับปัจจัย A และ B ถูกต้องหรือไม่\n2. หากคอลัมน์เกินมา ให้ลบข้อมูลในคอลัมน์ส่วนเกินออก\n3. หากคอลัมน์ขาด ให้กดปุ่ม '+ เพิ่มคอลัมน์ตัวแปร' ให้ครบถ้วน`);
+            }
+        }
+
+        let allData = []; let statsAB = []; let names = [];
+        let grandSum = 0; let grandSumSq = 0; let totalN = 0;
+        let sumA = new Array(a).fill(0); let nA = new Array(a).fill(0); let sumB = new Array(b).fill(0); let nB = new Array(b).fill(0);
+        let cellSums = []; let cellN = []; let dataA = Array.from({length: a}, () => []); let dataB = Array.from({length: b}, () => []);
+        let maxLen = Math.max(...validCols.map(c => c.data.length));
+        let minLen = Math.min(...validCols.map(c => c.data.length));
+        if (minLen !== maxLen && currentTest === 'factorial_rcbd') throw new Error("แผนการทดลองแบบ RCBD จำเป็นต้องมีจำนวนซ้ำเท่ากันทุกกลุ่มครับ");
+
+        let blockSums = new Array(maxLen).fill(0);
+
+        for (let c = 0; c < validCols.length; c++) {
+            let colData = validCols[c].data; 
+            if (colData.length < 2) throw new Error(`กลุ่ม '${validCols[c].name}' ต้องมีข้อมูลอย่างน้อย 2 ค่า`);
+            allData.push(colData); names.push(validCols[c].name);
+            let s = getStats(colData); s.name = validCols[c].name; statsAB.push(s);
+            grandSum += s.sum; grandSumSq += s.sumSq; totalN += s.n; cellSums.push(s.sum); cellN.push(s.n);
+            let idxA = Math.floor(c / b); let idxB = c % b; 
+            sumA[idxA] += s.sum; nA[idxA] += s.n; sumB[idxB] += s.sum; nB[idxB] += s.n;
+            dataA[idxA] = dataA[idxA].concat(colData); dataB[idxB] = dataB[idxB].concat(colData);
+            if (currentTest === 'factorial_rcbd') { for(let row = 0; row < colData.length; row++) blockSums[row] += colData[row]; }
+        }
+
+        let lev = calculateLevene(allData);
+        let statsA = dataA.map((arr, idx) => { let s = getStats(arr); s.name = `${nameA} ระดับ ${idx+1}`; return s; });
+        let statsB = dataB.map((arr, idx) => { let s = getStats(arr); s.name = `${nameB} ระดับ ${idx+1}`; return s; });
+        
+        const CF = (grandSum * grandSum) / totalN; const SSTotal = grandSumSq - CF; let SSBlock = 0;
+        if (currentTest === 'factorial_rcbd') { for (let i = 0; i < maxLen; i++) SSBlock += (blockSums[i] * blockSums[i]) / (a * b); SSBlock -= CF; }
+        
+        let SSTrt = 0; for (let c = 0; c < allData.length; c++) SSTrt += (cellSums[c] * cellSums[c]) / cellN[c]; SSTrt -= CF;
+        let SSA = 0; for (let i = 0; i < a; i++) SSA += (sumA[i] * sumA[i]) / nA[i]; SSA -= CF;
+        let SSB = 0; for (let j = 0; j < b; j++) SSB += (sumB[j] * sumB[j]) / nB[j]; SSB -= CF;
+        let SSAB = SSTrt - SSA - SSB; let SSE = SSTotal - SSBlock - SSTrt;
+        
+        const dfBlock = currentTest === 'factorial_rcbd' ? maxLen - 1 : 0; 
+        const dfA = a - 1; const dfB = b - 1; const dfAB = dfA * dfB; 
+        const dfTrt = a * b - 1; const dfE = currentTest === 'factorial_rcbd' ? (maxLen - 1) * (a * b - 1) : totalN - a * b; const dfTotal = totalN - 1;
+        
+        const MSBlock = dfBlock > 0 ? SSBlock / dfBlock : 0; const MSA = SSA / dfA; const MSB = SSB / dfB; const MSAB = SSAB / dfAB; const MSE = Math.max(0.0001, SSE / dfE);
+        const FBlock = dfBlock > 0 ? MSBlock / MSE : 0; const FA = MSA / MSE; const FB = MSB / MSE; const FAB = MSAB / MSE; 
+        
+        let pBlock = 1.0; try { pBlock = 1 - jStat.centralF.cdf(FBlock, dfBlock, dfE); } catch(e){}
+        let pA = 1.0; try { pA = 1 - jStat.centralF.cdf(FA, dfA, dfE); } catch(e){}
+        let pB = 1.0; try { pB = 1 - jStat.centralF.cdf(FB, dfB, dfE); } catch(e){}
+        let pAB = 1.0; try { pAB = 1 - jStat.centralF.cdf(FAB, dfAB, dfE); } catch(e){}
+        
+        const SSIntercept = CF, dfIntercept = 1, MSIntercept = SSIntercept / dfIntercept, FIntercept = MSIntercept / MSE; 
+        let pIntercept = 1.0; try { pIntercept = 1 - jStat.centralF.cdf(FIntercept, dfIntercept, dfE); } catch(e){}
+
+        let tableHTML = `<h4>Levene's Test of Equality of Error Variances</h4><div class="table-responsive"><table><tr><th class="left-align">${depVar}</th><th>Levene Statistic</th><th>df1</th><th>df2</th><th>Sig.</th></tr><tr><td class="left-align">Based on Mean</td><td>${lev.F.toFixed(3)}</td><td>${lev.df1}</td><td>${lev.df2}</td><td>${formatP(lev.p)}</td></tr></table></div>`;
+        tableHTML += `<h4>Tests of Between-Subjects Effects (Factorial)</h4><div class="table-responsive"><table><tr><th class="left-align">Source</th><th>Type III Sum of Squares</th><th>df</th><th>Mean Square</th><th>F</th><th>Sig.</th></tr><tr><td class="left-align">Intercept</td><td>${SSIntercept.toFixed(3)}</td><td>${dfIntercept}</td><td>${MSIntercept.toFixed(3)}</td><td>${FIntercept.toFixed(3)}</td><td>${formatP(pIntercept)}</td></tr>`;
+        if (currentTest === 'factorial_rcbd') { tableHTML += `<tr><td class="left-align">Blocks</td><td>${SSBlock.toFixed(3)}</td><td>${dfBlock}</td><td>${MSBlock.toFixed(3)}</td><td>${FBlock.toFixed(3)}</td><td>${formatP(pBlock)}</td></tr>`; }
+        tableHTML += `<tr><td class="left-align">${nameA}</td><td>${SSA.toFixed(3)}</td><td>${dfA}</td><td>${MSA.toFixed(3)}</td><td>${FA.toFixed(3)}</td><td>${formatP(pA)}</td></tr><tr><td class="left-align">${nameB}</td><td>${SSB.toFixed(3)}</td><td>${dfB}</td><td>${MSB.toFixed(3)}</td><td>${FB.toFixed(3)}</td><td>${formatP(pB)}</td></tr><tr><td class="left-align">${nameA} * ${nameB}</td><td>${SSAB.toFixed(3)}</td><td>${dfAB}</td><td>${MSAB.toFixed(3)}</td><td>${FAB.toFixed(3)}</td><td>${formatP(pAB)}</td></tr><tr><td class="left-align">Error</td><td>${SSE.toFixed(3)}</td><td>${dfE}</td><td>${MSE.toFixed(3)}</td><td></td><td></td></tr><tr><td class="left-align">Total</td><td>${(grandSumSq).toFixed(3)}</td><td>${totalN}</td><td></td><td></td><td></td></tr></table></div>`;
+
+        tableHTML += generateDescriptiveTable(`ปัจจัยหลัก ${nameA}`, statsA);
+        tableHTML += generateDescriptiveTable(`ปัจจัยหลัก ${nameB}`, statsB);
+        tableHTML += generateDescriptiveTable(`อิทธิพลร่วม (${nameA} x ${nameB})`, statsAB);
+
+        let dmrtA = generateDMRT_HTML(`ปัจจัยหลัก ${nameA}`, statsA, MSE, dfE);
+        let dmrtB = generateDMRT_HTML(`ปัจจัยหลัก ${nameB}`, statsB, MSE, dfE);
+        let dmrtAB = generateDMRT_HTML(`อิทธิพลร่วม (${nameA} x ${nameB})`, statsAB, MSE, dfE);
+
+        if(pA < 0.05) tableHTML += dmrtA.html;
+        if(pB < 0.05) tableHTML += dmrtB.html;
+        if(pAB < 0.05) tableHTML += dmrtAB.html;
+
+        let expText = `<div style="border: 2px solid #a5d6a7; border-radius: 10px; padding: 20px; background: white;"><h4 style="margin-top:0; color:#1b5e20;">อธิบายผลและสรุปข้อมูลภาพรวม (Factorial Design)</h4>`;
+        
+        expText += `<div class="exp-box" style="margin-top:10px;"><h4 class="exp-title">อธิบายผลการเปรียบเทียบพหุคูณ (ปัจจัยหลัก ${nameA}):</h4>`;
+        if (pA < 0.05) { expText += dmrtA.exp.replace('<div class="exp-box">', '').replace('</div>', ''); } 
+        else { expText += `<p class="exp-text">จากการทดสอบอิทธิพลของ <strong>${nameA}</strong> ที่มีต่อ <strong>${depVar}</strong> พบว่าไม่มีความแตกต่างกันอย่างมีนัยสำคัญทางสถิติ (P > 0.05)</p>`; }
+        expText += `</div>`;
+
+        expText += `<div class="exp-box"><h4 class="exp-title">อธิบายผลการเปรียบเทียบพหุคูณ (ปัจจัยหลัก ${nameB}):</h4>`;
+        if (pB < 0.05) { expText += dmrtB.exp.replace('<div class="exp-box">', '').replace('</div>', ''); } 
+        else { expText += `<p class="exp-text">จากการทดสอบอิทธิพลของ <strong>${nameB}</strong> ที่มีต่อ <strong>${depVar}</strong> พบว่าไม่มีความแตกต่างกันอย่างมีนัยสำคัญทางสถิติ (P > 0.05)</p>`; }
+        expText += `</div>`;
+
+        expText += `<div class="exp-box"><h4 class="exp-title">อธิบายผลการเปรียบเทียบพหุคูณ (อิทธิพลร่วม ${nameA} x ${nameB}):</h4>`;
+        if (pAB < 0.05) { expText += dmrtAB.exp.replace('<div class="exp-box">', '').replace('</div>', ''); } 
+        else { expText += `<p class="exp-text">จากการทดสอบอิทธิพลร่วมระหว่าง <strong>${nameA} และ ${nameB}</strong> ที่มีต่อ <strong>${depVar}</strong> พบว่าไม่มีความแตกต่างกันอย่างมีนัยสำคัญทางสถิติ (P > 0.05)</p>`; }
+        expText += `</div></div>`;
+
+        document.getElementById('result-tables').innerHTML = tableHTML; 
+        document.getElementById('result-explanation').innerHTML = expText; 
+        document.getElementById('result-section').style.display = 'block';
+    }
+
+    function analyzeNested() {
+        let validCols = [];
+        for (let c = 0; c < colsCount; c++) {
+            let colDataRaw = getColData(c);
+            let colData = colDataRaw.map(v => parseFloat(String(v).replace(/[^\d.-]/g, ''))).filter(v => !isNaN(v));
+            if (colData.length > 0) { validCols.push({name: document.getElementById(`header-${c}`).value, data: colData}); }
+        }
+
+        let a = parseInt(document.getElementById('fac1Levels').value); let b = parseInt(document.getElementById('fac2Levels').value);
+        let expectedCols = a * b;
+        
+        validCols = filterIDColumn(validCols);
+        
+        let nameA = document.getElementById('fac1Name').value; let nameB = document.getElementById('fac2Name').value;
+        let depVar = document.getElementById('depVarName').value || 'ผลผลิต';
+        
+        if (validCols.length !== expectedCols) {
+            // ระบบช่วยพยายามเดาระดับปัจจัย หากข้อมูลมาไม่ครบตาม UI
+            if(validCols.length === 4) { a=2; b=2; document.getElementById('fac1Levels').value=2; document.getElementById('fac2Levels').value=2; expectedCols=4; }
+            else if(validCols.length === 6) { a=2; b=3; document.getElementById('fac1Levels').value=2; document.getElementById('fac2Levels').value=3; expectedCols=6; }
+            else if(validCols.length === 8) { a=2; b=4; document.getElementById('fac1Levels').value=2; document.getElementById('fac2Levels').value=4; expectedCols=8; }
+            else if(validCols.length === 9) { a=3; b=3; document.getElementById('fac1Levels').value=3; document.getElementById('fac2Levels').value=3; expectedCols=9; }
+            else {
+                throw new Error(`ท่านป้อนข้อมูลมา ${validCols.length} กลุ่ม แต่แผนการทดลองต้องการ ${expectedCols} กลุ่ม (${a}x${b})\n\nคำแนะนำ:\n1. ตรวจสอบว่าท่านตั้งค่าระดับปัจจัย A และ B ถูกต้องหรือไม่\n2. หากคอลัมน์เกินมา ให้ลบข้อมูลในคอลัมน์ส่วนเกินออก`);
+            }
+        }
+
+        let allData = []; let names = [];
+        let grandSum = 0; let grandSumSq = 0; let totalN = 0;
+        let sumA = new Array(a).fill(0); let nA = new Array(a).fill(0); let cellSums = []; let cellN = []; let dataA = Array.from({length: a}, () => []);
+        
+        let statsNested = [];
+
+        for (let c = 0; c < validCols.length; c++) {
+            let colData = validCols[c].data; 
+            if (colData.length < 2) throw new Error(`กลุ่ม '${validCols[c].name}' ต้องมีข้อมูลอย่างน้อย 2 ค่า`);
+            allData.push(colData); names.push(validCols[c].name);
+            
+            let s = getStats(colData); s.name = validCols[c].name; statsNested.push(s);
+
+            let sumC = colData.reduce((x,y)=>x+y,0);
+            grandSum += sumC; grandSumSq += colData.reduce((x,y)=>x+y*y,0); totalN += colData.length;
+            cellSums.push(sumC); cellN.push(colData.length);
+            let idxA = Math.floor(c / b); sumA[idxA] += sumC; nA[idxA] += colData.length; dataA[idxA] = dataA[idxA].concat(colData);
+        }
+        let lev = calculateLevene(allData); let statsA = dataA.map((arr, idx) => { let s = getStats(arr); s.name = `${nameA} ที่ ${idx+1}`; return s; });
+        const CF = (grandSum * grandSum) / totalN; const SSTotal = grandSumSq - CF;
+        let SSA = 0; for (let i = 0; i < a; i++) SSA += (sumA[i] * sumA[i]) / nA[i]; SSA -= CF;
+        let SSBinA = 0; for (let c = 0; c < allData.length; c++) SSBinA += (cellSums[c] * cellSums[c]) / cellN[c]; SSBinA -= CF; SSBinA = SSBinA - SSA;
+        let SSE = SSTotal - SSA - SSBinA; const dfA = a - 1; const dfBinA = a * (b - 1); const dfE = totalN - (a * b); 
+        const MSA = SSA / dfA; const MSBinA = SSBinA / dfBinA; const MSE = Math.max(0.0001, SSE / dfE);
+        const FA = MSA / MSBinA; const FBinA = MSBinA / MSE; 
+        
+        let pA = 1.0; try { pA = 1 - jStat.centralF.cdf(FA, dfA, dfBinA); } catch(e){}
+        let pBinA = 1.0; try { pBinA = 1 - jStat.centralF.cdf(FBinA, dfBinA, dfE); } catch(e){}
+        const SSIntercept = CF, dfIntercept = 1, MSIntercept = SSIntercept / dfIntercept, FIntercept = MSIntercept / MSBinA; 
+        let pIntercept = 1.0; try { pIntercept = 1 - jStat.centralF.cdf(FIntercept, dfIntercept, dfBinA); } catch(e){}
+
+        let tableHTML = `<h4>Levene's Test of Equality of Error Variances</h4><div class="table-responsive"><table><tr><th class="left-align">${depVar}</th><th>Levene Statistic</th><th>df1</th><th>df2</th><th>Sig.</th></tr><tr><td class="left-align">Based on Mean</td><td>${lev.F.toFixed(3)}</td><td>${lev.df1}</td><td>${lev.df2}</td><td>${formatP(lev.p)}</td></tr></table></div>`;
+        tableHTML += `<h4>Tests of Between-Subjects Effects (Nested Design)</h4><div class="table-responsive"><table><tr><th class="left-align">Source</th><th>Type III Sum of Squares</th><th>df</th><th>Mean Square</th><th>F</th><th>Sig.</th></tr><tr><td class="left-align">Intercept</td><td>${SSIntercept.toFixed(3)}</td><td>${dfIntercept}</td><td>${MSIntercept.toFixed(3)}</td><td>${FIntercept.toFixed(3)}</td><td>${formatP(pIntercept)}</td></tr><tr><td class="left-align">${nameA}</td><td>${SSA.toFixed(3)}</td><td>${dfA}</td><td>${MSA.toFixed(3)}</td><td>${FA.toFixed(3)}</td><td>${formatP(pA)}</td></tr><tr><td class="left-align">${nameB}(${nameA})</td><td>${SSBinA.toFixed(3)}</td><td>${dfBinA}</td><td>${MSBinA.toFixed(3)}</td><td>${FBinA.toFixed(3)}</td><td>${formatP(pBinA)}</td></tr><tr><td class="left-align">Error</td><td>${SSE.toFixed(3)}</td><td>${dfE}</td><td>${MSE.toFixed(3)}</td><td></td><td></td></tr></table></div>`;
+        
+        tableHTML += generateDescriptiveTable(`ปัจจัยหลัก: ${nameA}`, statsA);
+        tableHTML += generateDescriptiveTable(`ปัจจัยซ้อน: ${nameB}(${nameA})`, statsNested);
+
+        let dmrtA = generateDMRT_HTML(`ปัจจัยหลัก: ${nameA}`, statsA, MSBinA, dfBinA);
+        if(pA < 0.05) tableHTML += dmrtA.html;
+
+        let expText = `<div class="exp-box"><h4 class="exp-title">อธิบายผลและสรุปข้อมูล (Nested Design):</h4>`;
+        
+        if (pA < 0.05) { 
+            expText += dmrtA.exp.replace('<div class="exp-box">', '').replace('</div>', ''); 
+        } else {
+            expText += `<p class="exp-text">จากการทดสอบอิทธิพลของ ปัจจัยหลัก <strong>${nameA}</strong> ที่มีต่อ <strong>${depVar}</strong> พบว่า <span class="exp-highlight">ไม่มีความแตกต่างกัน</span> อย่างมีนัยสำคัญทางสถิติ (P > 0.05)</p>
+            <div class="exp-note">💡 <strong>ฟันธง:</strong> ในการนำไปปฏิบัติจริง ท่านสามารถพิจารณาเลือกใช้กลุ่มหรือระดับใดก็ได้ โดยอิงจากความสะดวก หรือเลือกวิธีที่ประหยัดต้นทุนที่สุดได้เลยครับ</div>`;
+        }
+        
+        let interText = pBinA < 0.05 ? "มีความสัมพันธ์เชื่อมโยงกันอย่างมีนัยสำคัญ (P < 0.05)" : "ไม่มีความสัมพันธ์เชื่อมโยงกัน (P > 0.05)";
+        let alertColor = pBinA < 0.05 ? "exp-note" : "exp-note exp-danger";
+        expText += `<div class="${alertColor}" style="margin-top: 20px;">👉 <strong>สำหรับปัจจัยย่อย:</strong> พบว่าอิทธิพลของ <strong>${depVar}</strong> นั้น <span class="exp-highlight">${interText}</span> ระหว่าง <strong>${nameA}</strong> กับ <strong>${nameB}</strong></div></div>`;
+
+        document.getElementById('result-tables').innerHTML = tableHTML; 
+        document.getElementById('result-explanation').innerHTML = expText; 
+        document.getElementById('result-section').style.display = 'block';
+    }
+
+    function analyzeChiSqGoodness() {
+        let validColumns = [];
+        for (let c = 0; c < colsCount; c++) {
+            let colDataRaw = getColData(c);
+            let colData = colDataRaw.map(v => parseFloat(String(v).replace(/[^\d.-]/g, ''))).filter(v => !isNaN(v));
+            if (colData.length > 0) validColumns.push({name: document.getElementById(`header-${c}`).value, data: colData});
+        }
+        validColumns = filterIDColumn(validColumns);
+        if (validColumns.length < 2) throw new Error("ต้องป้อนข้อมูลอย่างน้อย 2 คอลัมน์ (Observed และ Expected)");
+
+        let obs = validColumns[0].data; let expRatio = validColumns[1].data;
+        if(obs.length !== expRatio.length || obs.length < 2) throw new Error("จำนวนข้อมูล (แถว) และสัดส่วนที่คาดหวังต้องครบและเท่ากัน");
+        
+        let totalObs = obs.reduce((a,b)=>a+b,0); let totalRatio = expRatio.reduce((a,b)=>a+b,0);
+        let chisq = 0; let df = obs.length - 1;
+        
+        let tableHTML = `<h4 style="text-align:left; color:#2e7d32; font-size:1.15rem; margin-bottom:5px;">Chi-Square Test (Goodness of Fit)</h4>
+        <div class="table-responsive" style="margin-top:0;"><table><tr><th class="left-align" style="background:#dcedc8;">ตัวชี้วัด / รายการ</th><th style="background:#dcedc8;">Observed (O)</th><th style="background:#dcedc8;">Expected (E)</th><th style="background:#dcedc8;">(O-E)² / E</th></tr>`;
+        
+        for(let i=0; i<obs.length; i++) {
+            let exp = (expRatio[i]/totalRatio) * totalObs;
+            let val = Math.pow(obs[i]-exp, 2) / exp; chisq += val;
+            tableHTML += `<tr><td class="left-align" style="font-weight:bold; color:#2e7d32;">รายการที่ ${i+1}</td><td>${obs[i]}</td><td>${exp.toFixed(2)}</td><td>${val.toFixed(3)}</td></tr>`;
+        }
+        let pValue = 1.0; try{ pValue = 1 - jStat.chisquare.cdf(chisq, df); }catch(e){}
+        
+        tableHTML += `<tr><td class="left-align"><strong>Total</strong></td><td><strong>${totalObs}</strong></td><td><strong>${totalObs.toFixed(2)}</strong></td><td style="color:#d32f2f;"><strong>Chi-Sq = ${chisq.toFixed(3)}</strong></td></tr></table></div>`;
+        tableHTML += `<div style="text-align:center; font-weight:bold; font-size:1.05rem; margin-bottom:15px; color:#33691e; background:#f1f8e9; padding:10px; border-radius:8px;">Degrees of Freedom (df) = ${df} &nbsp;|&nbsp; Asymp. Sig (P-value) = ${formatP(pValue)}</div>`;
+        
+        let sigText = pValue < 0.05 ? `<span style="font-weight:bold;">มีความแตกต่าง</span> อย่างมีนัยสำคัญทางสถิติ (P < 0.05) จึง<span style="color:#d32f2f; font-weight:bold;">ปฏิเสธ H0</span> นั่นคือสัดส่วนข้อมูลที่ได้ ไม่ได้เป็นไปตามสัดส่วนที่คาดหวังไว้` : `<span style="font-weight:bold;">ไม่มีความแตกต่าง</span> อย่างมีนัยสำคัญทางสถิติ (P > 0.05) จึง<span style="color:#1b5e20; font-weight:bold;">ยอมรับ H0</span> นั่นคือสัดส่วนข้อมูลที่ได้ เป็นไปตามสัดส่วนที่คาดหวังไว้`;
+        
+        let expText = `<div class="exp-box"><h4 class="exp-title">การตีความและรายงานผล (Test of Goodness of Fit):</h4>
+        <p class="exp-text">การทดสอบนี้เป็นการทดสอบเกี่ยวกับการแจกแจงของประชากร ว่าเป็นไปตามสัดส่วนที่กำหนดไว้หรือไม่</p>
+        <p class="exp-text">ผลการทดสอบพบว่า ${sigText}</p>
+        <h4 style="color:#004d40; font-size:1.1rem; margin-top:20px; padding-bottom:5px;">รายละเอียดความคลาดเคลื่อนตามตัวชี้วัด:</h4>`;
+
+        for(let i=0; i<obs.length; i++) {
+            let exp = (expRatio[i]/totalRatio) * totalObs;
+            let diff = obs[i] - exp;
+            expText += `<div style="background:#f1f8e9; border:1px solid #c5e1a5; border-left:4px solid #8bc34a; padding:12px 15px; border-radius:6px; margin-bottom:8px; color:#333;">
+            <strong style="color:#2e7d32;">รายการที่ ${i+1}:</strong> มีจำนวนความถี่ที่สังเกตได้ <strong>${obs[i]}</strong> (จากที่คาดหวังไว้ ${exp.toFixed(2)}) ทำให้มีความคลาดเคลื่อน <span style="font-weight:bold; color:${diff < 0 ? '#d32f2f' : '#1976d2'};">${diff > 0 ? '+'+diff.toFixed(2) : diff.toFixed(2)}</span>
+            </div>`;
+        }
+        expText += `</div>`;
+
+        document.getElementById('result-tables').innerHTML = tableHTML;
+        document.getElementById('result-explanation').innerHTML = expText;
+        document.getElementById('result-section').style.display = 'block';
+    }
+
+    function analyzeChiSqCross() {
+        let allCols = [];
+        for (let c = 0; c < colsCount; c++) { 
+            let colDataRaw = getColData(c); 
+            if(colDataRaw.length > 0) { allCols.push({name: document.getElementById(`header-${c}`).value, dataRaw: colDataRaw}); }
+        }
+
+        if(allCols.length < 2) throw new Error("ตาราง Crosstabs ต้องมีอย่างน้อย 2 คอลัมน์");
+
+        let rowLabels = [];
+        let firstCol = allCols[0];
+        let nameStr = firstCol.name.replace(/\s+/g, '').toLowerCase();
+        let isIdHeader = /(ตัวชี้วัด|รายการ|ตัวที่|ซ้ำ|ลำดับ|id|no|ครั้งที่|rep|^ที่$)/i.test(nameStr);
+        
+        let firstColNumeric = firstCol.dataRaw.map(v => parseFloat(String(v).replace(/[^\d.-]/g, '')));
+        let isFirstColAllNumeric = firstColNumeric.length > 0 && firstColNumeric.every(v => !isNaN(v));
+        let isSeq = isFirstColAllNumeric && firstColNumeric.length >= 2 && firstColNumeric[0] === 1 && firstColNumeric.every((val, idx) => Math.abs(val - (1 + idx)) < 0.001);
+
+        if (!isFirstColAllNumeric || isSeq || isIdHeader) {
+            rowLabels = firstCol.dataRaw;
+            allCols.shift();
+        }
+
+        let validCols = allCols.map(col => {
+            return {
+                name: col.name,
+                data: col.dataRaw.map(v => parseFloat(String(v).replace(/[^\d.-]/g, ''))).filter(v => !isNaN(v))
+            };
+        }).filter(col => col.data.length > 0);
+
+        if (validCols.length < 2) throw new Error("ตาราง Crosstabs ต้องมีอย่างน้อย 2 กลุ่ม (คอลัมน์) ที่เป็นตัวเลข");
+        
+        let obs = validCols.map(c => c.data);
+        let colNames = validCols.map(c => c.name);
+
+        let rCount = Math.min(...obs.map(arr => arr.length));
+        if(rCount < 2) throw new Error("ตาราง Crosstabs ต้องมีอย่างน้อย 2 แถว");
+        
+        let rowNames = [];
+        for(let r=0; r<rCount; r++) {
+            if (rowLabels.length > r && String(rowLabels[r]).trim() !== '') {
+                rowNames.push(String(rowLabels[r]).trim());
+            } else {
+                rowNames.push(`ระดับที่ ${r+1}`);
+            }
+        }
+
+        let rowTotals = new Array(rCount).fill(0); 
+        let colTotals = new Array(obs.length).fill(0); 
+        let grandTotal = 0;
+
+        for (let c = 0; c < obs.length; c++) { 
+            for (let r = 0; r < rCount; r++) { 
+                rowTotals[r] += obs[c][r]; 
+                colTotals[c] += obs[c][r]; 
+                grandTotal += obs[c][r]; 
+            } 
+        }
+
+        let chisq = 0; let df = (rCount - 1) * (obs.length - 1);
+        for (let c = 0; c < obs.length; c++) {
+            for (let r = 0; r < rCount; r++) { 
+                let expected = (rowTotals[r] * colTotals[c]) / grandTotal; 
+                chisq += Math.pow(obs[c][r] - expected, 2) / expected; 
+            }
+        }
+        
+        let pValue = 1.0; try{ pValue = 1 - jStat.chisquare.cdf(chisq, df); }catch(e){}
+
+        let tableHTML = `<h4 style="text-align:left; color:#2e7d32; font-size:1.15rem; margin-bottom:5px;">Crosstabulation</h4>
+        <div class="table-responsive" style="margin-top:0;"><table><tr><th class="left-align" style="background:#dcedc8;">ตัวชี้วัด / รายการ</th>`;
+        for(let c=0; c<obs.length; c++) tableHTML += `<th style="background:#dcedc8;">${colNames[c]}</th>`;
+        tableHTML += `<th style="background:#dcedc8;">Total</th></tr>`;
+        
+        for(let r=0; r<rCount; r++) {
+            tableHTML += `<tr><td class="left-align"><strong>${rowNames[r]}</strong></td>`;
+            for(let c=0; c<obs.length; c++) { tableHTML += `<td>${obs[c][r]}</td>`; }
+            tableHTML += `<td><strong>${rowTotals[r]}</strong></td></tr>`;
+        }
+        tableHTML += `<tr><td class="left-align"><strong>Total</strong></td>`;
+        for(let c=0; c<obs.length; c++) { tableHTML += `<td><strong>${colTotals[c]}</strong></td>`; }
+        tableHTML += `<td><strong>${grandTotal}</strong></td></tr></table></div>`;
+
+        tableHTML += `<h4 style="text-align:center; color:#2e7d32; font-size:1.15rem; margin-bottom:5px;">Chi-Square Tests</h4>
+        <div class="table-responsive" style="margin-top:0; max-width:800px; margin-left:auto; margin-right:auto;"><table>
+        <tr><th class="left-align">Value</th><th>df</th><th>Asymp. Sig. (2-sided)</th></tr>
+        <tr><td class="left-align">Pearson Chi-Square</td><td>${chisq.toFixed(3)}</td><td>${df}</td><td>${formatP(pValue)}</td></tr>
+        <tr><td class="left-align">N of Valid Cases</td><td>${grandTotal}</td><td></td><td></td></tr>
+        </table></div>`;
+
+        tableHTML += `<h4 style="text-align:left; color:#2e7d32; font-size:1.15rem; margin-bottom:5px;">ตารางรายงานผลการวิจัย (สรุปสถิติเพื่อนำไปใช้ประโยชน์)</h4>
+        <div class="table-responsive" style="margin-top:0;"><table>
+        <tr><th class="left-align">ระดับกลุ่ม / ตัวแปร</th>`;
+        for(let r=0; r<rCount; r++) tableHTML += `<th>${rowNames[r]}</th>`;
+        tableHTML += `<th>รวม</th></tr>`;
+        
+        tableHTML += `<tr><td class="left-align">จำนวนข้อมูล (N)</td>`;
+        for(let r=0; r<rCount; r++) tableHTML += `<td>${rowTotals[r]}</td>`;
+        tableHTML += `<td><strong>${grandTotal}</strong></td></tr>`;
+
+        tableHTML += `<tr><td class="left-align">% จำนวนข้อมูลทั้งหมด</td>`;
+        for(let r=0; r<rCount; r++) tableHTML += `<td>${((rowTotals[r]/grandTotal)*100).toFixed(1)}</td>`;
+        tableHTML += `<td><strong>100</strong></td></tr>`;
+
+        for(let c=0; c<obs.length; c++) {
+            tableHTML += `<tr><td class="left-align">% ${colNames[c]}</td>`;
+            for(let r=0; r<rCount; r++) { tableHTML += `<td>${((obs[c][r]/rowTotals[r])*100).toFixed(1)}</td>`; }
+            tableHTML += `<td>${((colTotals[c]/grandTotal)*100).toFixed(1)}</td></tr>`;
+        }
+
+        let modes = [];
+        tableHTML += `<tr><td class="left-align" style="color:#d32f2f; font-weight:bold;">P-value (Sig.)</td><td colspan="${rCount+1}" style="color:#d32f2f; font-weight:bold; text-align:left; padding-left:20px;">${formatP(pValue)}</td></tr>`;
+        
+        tableHTML += `<tr><td class="left-align" style="background:#fff9c4;"><strong>ระดับฐานนิยม (Mode)</strong></td>`;
+        for(let r=0; r<rCount; r++) {
+            let maxVal = -1; let maxIdx = -1;
+            for(let c=0; c<obs.length; c++) { if(obs[c][r] > maxVal) { maxVal = obs[c][r]; maxIdx = c; } }
+            modes.push(colNames[maxIdx]);
+            tableHTML += `<td style="color:#e65100; font-weight:bold; background:#fff9c4;">${colNames[maxIdx]}</td>`;
+        }
+        let totalMaxVal = -1; let totalMaxIdx = -1;
+        for(let c=0; c<obs.length; c++) { if(colTotals[c] > totalMaxVal) { totalMaxVal = colTotals[c]; totalMaxIdx = c; } }
+        let totalMode = colNames[totalMaxIdx];
+        tableHTML += `<td style="color:#e65100; font-weight:bold; background:#fff9c4;">${totalMode}</td></tr></table></div>`;
+
+        let sigText = pValue < 0.05 ? "มีความแตกต่างและมีอิทธิพลต่อข้อมูลอย่างมีนัยสำคัญ" : "ไม่มีความแตกต่างและไม่มีอิทธิพลต่อข้อมูล";
+        let sigColor = pValue < 0.05 ? "#d32f2f" : "#1b5e20";
+        
+        let expText = `<div class="exp-box"><h4 class="exp-title">การตีความและรายงานผลข้อมูลจากตาราง:</h4>
+        <p class="exp-text">สรุปได้ว่า จากการเก็บข้อมูลจำนวน <strong>${grandTotal}</strong> รายการ แบ่งเป็น `;
+        let groupPercents = [];
+        for(let r=0; r<rCount; r++) groupPercents.push(`กลุ่ม ${rowNames[r]} จำนวน ${((rowTotals[r]/grandTotal)*100).toFixed(1)}%`);
+        expText += groupPercents.join(', ') + `</p>`;
+
+        expText += `<p class="exp-text">จากการวิเคราะห์ผลทางสถิติพบว่า ตัวแปรหลัก<strong style="color:${sigColor};">${sigText}</strong> เพราะค่า P-value (Asymp. Sig.) มีค่าเท่ากับ ${formatP(pValue)} ซึ่ง${pValue < 0.05 ? 'มีค่าน้อยกว่า' : 'มีค่ามากกว่า'}ระดับนัยสำคัญที่ 0.05 โดยพบข้อมูลจำแนกดังนี้:</p>`;
+        
+        expText += `<ul style="list-style-type: none; padding-left: 15px;" class="exp-text">`;
+        for(let r=0; r<rCount; r++) {
+            expText += `<li>- <strong>${rowNames[r]}</strong> มีฐานนิยม (Mode) ส่วนใหญ่อยู่ในระดับ <strong>(${modes[r]})</strong></li>`;
+        }
+        expText += `</ul>`;
+        
+        expText += `<p class="exp-text" style="margin-top:15px; font-weight:bold; color:#004d40;">และเมื่อพิจารณาภาพรวม ข้อมูลทั้งหมดมีฐานนิยมอยู่ในระดับ (${totalMode})</p></div>`;
+
+        document.getElementById('result-tables').innerHTML = tableHTML;
+        document.getElementById('result-explanation').innerHTML = expText;
+        document.getElementById('result-section').style.display = 'block';
+    }
+
+
+    // ==========================================
+    // File IO & Storage
+    // ==========================================
+    function clearData() {
+        if (confirm('ยืนยันล้างข้อมูลทั้งหมด?')) {
+            document.querySelectorAll('.data-val').forEach(input => input.value = '');
+            document.getElementById('saveFileName').value = '';
+            document.getElementById('result-section').style.display = 'none';
+        }
+    }
+
+    function exitProgram() {
+        if (confirm('คุณต้องการออกจากโปรแกรมใช่หรือไม่?')) {
+            document.body.innerHTML = `<div style="text-align:center; margin-top:30vh; color:white;"><h2 style="font-size:2.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">คุณได้ออกจากโปรแกรมแล้ว</h2></div>`;
+        }
+    }
+
+    function saveData() {
+        const fileNameInput = document.getElementById('saveFileName').value.trim() || 'data_' + currentTest;
+        let dataObj = { 
+            type: currentTest, fileName: fileNameInput, date: new Date().toLocaleString('th-TH'), columns: [],
+            fac1Levels: document.getElementById('fac1Levels').value, fac2Levels: document.getElementById('fac2Levels').value,
+            fac1Name: document.getElementById('fac1Name').value, fac2Name: document.getElementById('fac2Name').value,
+            depVarName: document.getElementById('depVarName').value, depVarUnit: document.getElementById('depVarUnit').value
+        };
+        for (let c = 0; c < colsCount; c++) {
+            let inputs = document.querySelectorAll(`.col-${c}`); let colData = [];
+            inputs.forEach(inp => { 
+                let valStr = inp.value.trim();
+                let cleanVal = parseFloat(valStr.replace(/[^\d.-]/g, '')); 
+                if(!isNaN(cleanVal) && valStr !== '') colData.push(cleanVal); 
+                else if(valStr !== '') colData.push(valStr);
+            });
+            dataObj.columns.push({ name: document.getElementById(`header-${c}`).value, data: colData });
+        }
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataObj));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr); downloadAnchorNode.setAttribute("download", fileNameInput + ".json");
+        document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove();
+        let history = JSON.parse(localStorage.getItem('stat_history') || '[]');
+        history.unshift(dataObj); if (history.length > 30) history.pop(); 
+        localStorage.setItem('stat_history', JSON.stringify(history));
+        
+        if(document.getElementById('history-section').style.display === 'block') { showingAllHistory = false; renderHistory(); }
+        alert("บันทึกข้อมูลเรียบร้อยแล้วครับ");
+    }
+
+    function loadDataFromFile(event) {
+        const file = event.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) { try { applyDataToUI(JSON.parse(e.target.result)); alert("โหลดข้อมูลสำเร็จ"); } catch (err) { alert("ไฟล์ข้อมูลไม่ถูกต้อง"); } };
+        reader.readAsText(file); event.target.value = ''; 
+    }
+
+    function applyDataToUI(data) {
+        if (!data || (!data.type && !data.columns)) return alert("รูปแบบไฟล์ไม่ถูกต้อง หรือไฟล์ว่างเปล่า");
+        
+        let loadedType = data.type || currentTest;
+        let loadedCols = data.columns || [];
+        
+        if (loadedCols.length === 0) {
+            if (data.group1) {
+                loadedCols.push({name: data.group1Name || 'กลุ่ม 1', data: data.group1});
+                if (data.group2) loadedCols.push({name: data.group2Name || 'กลุ่ม 2', data: data.group2});
+            } else if (data.data && Array.isArray(data.data[0])) {
+                data.data.forEach((colArr, idx) => {
+                    let colName = (data.headers && data.headers[idx]) ? data.headers[idx] : `กลุ่ม ${idx+1}`;
+                    loadedCols.push({ name: colName, data: colArr });
+                });
+            } else { return alert("รูปแบบไฟล์เก่าเกินไป หรือไม่มีโครงสร้างข้อมูลในไฟล์ครับ"); }
+        }
+
+        let testTypeSelect = document.getElementById('testType');
+        let optionExists = Array.from(testTypeSelect.options).some(opt => opt.value === loadedType);
+        if (!optionExists) {
+            if (loadedType === 'anova') loadedType = 'crd';
+            else if (loadedType === 'regression_stepwise') loadedType = 'regression';
+            else loadedType = 'indep';
+        }
+
+        let targetCols = loadedCols.length;
+
+        if(['factorial', 'factorial_rcbd', 'nested'].includes(loadedType)) {
+            if(data.fac1Levels) document.getElementById('fac1Levels').value = data.fac1Levels;
+            if(data.fac2Levels) document.getElementById('fac2Levels').value = data.fac2Levels;
+            if(data.fac1Name) document.getElementById('fac1Name').value = data.fac1Name;
+            if(data.fac2Name) document.getElementById('fac2Name').value = data.fac2Name;
+
+            if(!data.fac1Levels || !data.fac2Levels) {
+                if (targetCols % 2 === 0) { document.getElementById('fac1Levels').value = targetCols/2; document.getElementById('fac2Levels').value = 2; }
+                else if (targetCols % 3 === 0) { document.getElementById('fac1Levels').value = targetCols/3; document.getElementById('fac2Levels').value = 3; }
+                else { document.getElementById('fac1Levels').value = targetCols; document.getElementById('fac2Levels').value = 1; }
+            }
+        }
+
+        testTypeSelect.value = loadedType; currentTest = loadedType; switchTestType(); 
+
+        if(!['factorial', 'factorial_rcbd', 'nested'].includes(loadedType)) {
+            while (colsCount < targetCols) addColumn();
+            while (colsCount > targetCols) { if (colsCount <= 1) break; removeColumn(); }
+        }
+
+        document.getElementById('saveFileName').value = data.fileName || '';
+
+        let targetRows = 0; 
+        loadedCols.forEach(col => { if(col.data && col.data.length > targetRows) targetRows = col.data.length; });
+        if(targetRows < 2) targetRows = 2;
+
+        while (rowsCount < targetRows) addRow();
+        while (rowsCount > targetRows && rowsCount > 2) removeRow();
+
+        loadedCols.forEach((col, c) => {
+            let headerInput = document.getElementById(`header-${c}`);
+            if(headerInput) headerInput.value = col.name || `กลุ่ม ${c+1}`;
+            
+            if(col.data && Array.isArray(col.data)) {
+                for (let r = 0; r < targetRows; r++) {
+                    let cellInput = document.querySelector(`input[data-col="${c}"][data-row="${r}"]`);
+                    if(cellInput) cellInput.value = (col.data[r] !== undefined && col.data[r] !== null) ? col.data[r] : '';
+                }
+            }
+        });
+        
+        if (data.depVarName) document.getElementById('depVarName').value = data.depVarName;
+        if (data.depVarUnit) document.getElementById('depVarUnit').value = data.depVarUnit;
+    }
+
+    function toggleHistory() {
+        const sec = document.getElementById('history-section');
+        if (sec.style.display === 'block') { closeHistory(); } 
+        else { sec.style.display = 'block'; showingAllHistory = false; renderHistory(); }
+    }
+
+    function closeHistory() { document.getElementById('history-section').style.display = 'none'; }
+
+    function renderHistory() {
+        const history = JSON.parse(localStorage.getItem('stat_history') || '[]');
+        const list = document.getElementById('history-list');
+        if (history.length === 0) { list.innerHTML = "<div style='text-align:center; padding: 15px; color:#777;'>ไม่มีประวัติการบันทึก</div>"; return; }
+        
+        list.innerHTML = '';
+        let limit = showingAllHistory ? history.length : Math.min(5, history.length);
+
+        for(let i=0; i<limit; i++) {
+            let item = history[i];
+            list.innerHTML += `
+            <div class="history-item">
+                <div><strong style="color:#e65100; font-size:1.1rem;">${item.fileName}</strong> <span style="color:#00897b; font-size:0.9rem;">[${item.type}]</span> <br><span style="color:#777; font-size:0.85rem;">📅 ${item.date}</span></div>
+                <div class="history-actions">
+                    <button class="btn-hist-load" onclick="loadHistoryItem(${i})">📥 โหลดข้อมูลกลับสู่ตาราง</button>
+                    <button class="btn-hist-del" onclick="deleteHistoryItem(${i})">🗑️ ลบออกจากประวัติ</button>
+                </div>
+            </div>`;
+        }
+        if (history.length > 5) {
+            if (!showingAllHistory) list.innerHTML += `<button class="btn-show-more" onclick="toggleShowAllHistory()">▼ แสดงประวัติทั้งหมด (${history.length} รายการ)</button>`;
+            else list.innerHTML += `<button class="btn-show-more" onclick="toggleShowAllHistory()">▲ ย่อประวัติ (แสดงแค่ 5 รายการล่าสุด)</button>`;
+        }
+    }
+
+    function toggleShowAllHistory() { showingAllHistory = !showingAllHistory; renderHistory(); }
+
+    function loadHistoryItem(index) {
+        const history = JSON.parse(localStorage.getItem('stat_history') || '[]');
+        if (history[index]) { applyDataToUI(history[index]); alert("โหลดข้อมูลจากประวัติสำเร็จครับ"); }
+    }
+
+    function deleteHistoryItem(index) {
+        if(confirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลนี้ออกจากประวัติอย่างถาวร?')) {
+            let history = JSON.parse(localStorage.getItem('stat_history') || '[]');
+            history.splice(index, 1); localStorage.setItem('stat_history', JSON.stringify(history)); renderHistory();
+        }
+    }
+
+    function loadTemplate() {
+        const tmpl = TEMPLATES[currentTest];
+        if(tmpl) {
+            if(confirm('ต้องการโหลดข้อมูลแม่แบบสำหรับ ' + document.getElementById('testType').options[document.getElementById('testType').selectedIndex].text + ' ใช่หรือไม่?\n(ข้อมูลเดิมในตารางจะถูกลบทิ้ง)')) {
+                applyDataToUI(tmpl);
+            }
+        } else { alert("ขออภัยครับ ยังไม่มีแม่แบบสำหรับการทดสอบนี้"); }
+    }
+
+    function updateCounter() {
+        const viewEl = document.getElementById('viewCount');
+        const GLOBAL_NAMESPACE = "jessada_stat_app_global"; const GLOBAL_KEY = "total_visits";
+        let localHits = parseInt(localStorage.getItem('jessada_offline_hits') || "0");
+        localHits++; localStorage.setItem('jessada_offline_hits', localHits);
+        fetch(`https://api.counterapi.dev/v1/${GLOBAL_NAMESPACE}/${GLOBAL_KEY}/up`)
+            .then(response => response.json())
+            .then(data => { viewEl.innerText = data.count.toLocaleString(); })
+            .catch(error => { viewEl.innerText = localHits.toLocaleString() + " (ออฟไลน์)"; });
+    }
+</script>
+
+</body>
+</html>
